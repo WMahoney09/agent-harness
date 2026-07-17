@@ -1,1 +1,5 @@
 .claude/settings.local.json
+
+# Local settings overrides — hold machine-local config and secrets, never committed.
+# The active user settings live in user/ (symlinked to ~/.claude), so guard that path too.
+user/settings.local.json

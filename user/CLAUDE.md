@@ -81,3 +81,17 @@ This applies to logs, JSON, CSVs, command output — any data. If a file is larg
 The only exception is if the user explicitly asks you to write a script.
 
 Why: The user has no visibility into what ad-hoc scripts do. Token cost is not a concern — transparency is.
+
+## Credentials: Never in Git-Tracked Files (MANDATORY)
+
+NEVER store secrets, API tokens, credentials, private keys, or passwords in a file that git tracks — or in any file that could be committed. This is a non-negotiable rule of engagement.
+
+**Rules:**
+
+1. **Secrets live only in untracked locations** — environment variables, `~/.claude/settings.local.json`, gitignored `.env*` files, or a real secrets manager. Never in a tracked config, source, or settings file.
+2. **Verify before writing.** Before writing a credential anywhere, confirm the target is gitignored or outside any repo. If you cannot confirm it's ignored, treat it as tracked and do NOT write the secret there.
+3. **Gitignore first.** A `*.local.json`, `.env`, or similar must be confirmed gitignored *before* any secret goes into it.
+4. **Never stage or commit a secret.** Never run `git add -A` / `git add .` when a plaintext secret sits anywhere in the working tree. Never commit or push a file containing one.
+5. **Stop and flag on discovery.** If you find a credential in a tracked file — even uncommitted — STOP, flag it to the user immediately, and do not commit around it. Offer to relocate it to an untracked location.
+
+**Why:** A secret in a tracked file leaks the instant the file is committed and pushed, and git history is durable — after-the-fact removal means rewriting history AND rotating the credential. Keeping secrets out of tracked files entirely is the only reliable prevention.

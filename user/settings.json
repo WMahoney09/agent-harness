@@ -39,33 +39,28 @@
       "mcp__figma__use_figma",
       "mcp__claude_ai_Circleback__SearchMeetings",
       "mcp__claude_ai_Circleback__GetTranscriptsForMeetings",
-      "Bash(git:*)",
-      "Bash(base64:*)"
+      "Bash(git:*)"
     ],
     "defaultMode": "auto"
   },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/will/.claude/hooks/block-pr-review-state.sh"
-          }
-        ]
-      }
-    ]
-  },
   "statusLine": {
     "type": "command",
-    "command": "~/.config/claude-code/statusline.sh"
+    "command": "bash ~/.claude/gnar-statusline.sh",
+    "padding": 0,
+    "refreshInterval": 10
+  },
+  "subagentStatusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/gnar-subagent-statusline.sh"
   },
   "enabledPlugins": {
     "ideate@gnar": true,
     "ignite@gnar": true,
     "gnar-react@gnar": true,
-    "spacebase@gnar": true
+    "spacebase@gnar": true,
+    "audit@gnar": true,
+    "toolkit@gnar": true,
+    "gninety@gnar": true
   },
   "extraKnownMarketplaces": {
     "gnar": {
@@ -76,7 +71,9 @@
     }
   },
   "effortLevel": "high",
-  "theme": "light-daltonized",
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "theme": "dark-daltonized",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true
 }
