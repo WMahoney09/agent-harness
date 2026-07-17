@@ -56,9 +56,6 @@ When any skill, agent, or hook is added, updated, removed, or renamed in this re
 
 ## Docs convention (for consuming projects)
 
-The `docs/` directory in *consuming projects* (not this repo) holds project-local documentation:
+Skill outputs are **inline by default** — produced in the conversation, not written to disk. Running a skill leaves no files behind in the consuming project.
 
-- `docs/workstreams/<slug>/` — artifacts from skill output (problem statements, plans, review reports)
-- `docs/reference/` — project reference material
-
-Artifacts are project-local — saved to the consuming project's `docs/workstreams/<slug>/`, never to tool-specific directories like `.claude/*`, `.cursor/*`, or home directory conventions like `~/.claude/*`.
+The one persisted exception is the **plan file**, which `planning` writes to `docs/plans/<work-item>.plan.md` so `pre-flight`, `atomize`, and `produce` can operate on it and `produce` can commit `[plan]` progress. When present, it must be project-local — never a tool-specific directory like `.claude/*`, `.cursor/*`, or a home-directory path like `~/.claude/*`.

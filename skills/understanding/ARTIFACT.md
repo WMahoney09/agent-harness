@@ -1,7 +1,7 @@
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
-- **Filename:** `problem-statement.md`
+- **Storage:** Inline — output is produced in-context, not saved to a file
+- **Filename:** N/A
 - **Trigger:** When the understanding phase closes and mutual alignment is confirmed
 
 ## Template
@@ -23,17 +23,9 @@
 
 ## Assumptions Surfaced
 <!-- Assumptions discovered during understanding that should be validated -->
-
-## Workstream Slug
-<!-- Slugified from the problem statement — used as the `docs/workstreams/<slug>/` directory name -->
 ```
-
-## Side Effects
-
-- Create `docs/workstreams/<slug>/` directory at the nearest project root if it doesn't exist
-- The slug is derived from the problem statement (lowercase, hyphenated, concise)
 
 ## Notes
 
-- `problem-statement.md` is the precondition artifact for `/leeroyyyyy` — it must exist before the autonomous pipeline can be invoked
-- The workstream slug establishes the directory name used by all subsequent artifacts in the delivery pipeline
+- The problem statement is presented inline in the conversation, not written to a file.
+- If the work proceeds to planning, the `<work-item>` slug for the plan file is derived from this problem statement (lowercase, hyphenated, concise).

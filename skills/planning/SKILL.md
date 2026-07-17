@@ -38,7 +38,7 @@ This prevents oversized phases that are hard to implement atomically and surface
 
 ### 4. Present the Plan
 
-Save the plan to `docs/workstreams/<work-item>/` at the nearest project root, using `<work-item>.plan.md`.
+Save the plan to `docs/plans/<work-item>.plan.md` at the nearest project root.
 
 The plan uses a **Phase > Step > Task** breakdown:
 
@@ -76,8 +76,8 @@ The plan must include:
 - **Identify critical paths** — Make dependencies and ordering explicit.
 - **Surface assumptions** — Call out assumptions so they can be validated.
 - **Scope clarity** — Be explicit about what's included and what's not.
-- **Artifacts are project-local** — Save to `docs/workstreams/<work-item>/`, never to tool-specific directories.
+- **The plan is project-local** — Save to `docs/plans/<work-item>.plan.md`, never to tool-specific directories.
 
 ## Artifact
 
-Produces `<work-item>.plan.md` in `docs/workstreams/<work-item>/`.
+Produces `<work-item>.plan.md` in `docs/plans/`.

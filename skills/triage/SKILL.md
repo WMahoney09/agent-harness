@@ -177,7 +177,7 @@ These IDs are used by `/revise` in commit messages to maintain traceability betw
 
 ## Artifact
 
-Produces `triage-report.md` in `docs/workstreams/<work-item>/`. See `ARTIFACT.md` for the full template. Generated when triage groupings are finalized.
+Presents the triage report inline (not written to a file). See `ARTIFACT.md` for the full template. Produced when triage groupings are finalized.
 
 ## Closure Criteria
 

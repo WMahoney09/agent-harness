@@ -34,7 +34,7 @@ Closes #<issue-number>
 
 **Issue links** — Appear first. Use GitHub-recognized resolution keywords (`Closes`, `Resolves`, `Fixes`) followed by the issue number. For external trackers (Linear, Jira), use a markdown link to the ticket instead.
 
-**Artifact links** — Link to `problem-statement.md` and `solution-statement.md` if they exist in the workstream directory. Omit this line if no artifacts exist.
+**Artifact links** — Skill outputs are inline by default, so these usually don't exist as files. Only if the project persisted a `problem-statement.md` / `solution-statement.md` as a file, link to it. Omit this line otherwise.
 
 **Summary** — Start with a prose overview (1–8 sentences), then a bulleted list. The first two bullets should summarize the problem and the solution. Remaining bullets describe specific changes.
 

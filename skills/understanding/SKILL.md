@@ -51,7 +51,7 @@ If the project has a `docs/reference/` directory, consult it for existing contex
 
 ## Artifact
 
-Produces `problem-statement.md` in `docs/workstreams/<slug>/`. See `ARTIFACT.md` for the full template. Generated when understanding closes and mutual alignment is confirmed.
+Presents a problem statement inline (not written to a file). See `ARTIFACT.md` for the full template. Produced when understanding closes and mutual alignment is confirmed.
 
 ## Closure Criteria
 

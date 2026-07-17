@@ -103,7 +103,7 @@ Abstract reasoning disconnected from the codebase tends to drift. Keep pulling b
 
 ## Artifact
 
-Produces `truth-and-vector.md` in `docs/workstreams/<work-item>/`. See `ARTIFACT.md` for the full template. Generated when the reasoning pass is complete and a direction has been established.
+Presents the truth-and-vector output inline (not written to a file). See `ARTIFACT.md` for the full template. Produced when the reasoning pass is complete and a direction has been established.
 
 ## Closure Criteria
 

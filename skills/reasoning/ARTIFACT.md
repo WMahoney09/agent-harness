@@ -1,7 +1,7 @@
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
-- **Filename:** `truth-and-vector.md`
+- **Storage:** Inline — output is produced in-context, not saved to a file
+- **Filename:** N/A
 - **Trigger:** When the reasoning pass is complete and a direction has been established
 
 ## Template
@@ -32,12 +32,12 @@ Examples:
   Recommendation: tire-kicking | Confidence: medium | Rationale: Genuine ambiguity between candidates; stress-testing needed.
   Recommendation: understanding | Confidence: high | Rationale: Problem space has shifted; revisit Research.
 
-Note: This block is only populated when reasoning runs in Align context (solution-statement.md exists).
+Note: This block is only populated when reasoning runs in Align context.
 When reasoning runs standalone, omit this section.
 -->
 ```
 
 ## Notes
 
-- The truth-and-vector artifact captures the output of reasoning — truths, conditionals, and a directional aim — as a referenceable file
-- In the leeroyyyyy pipeline, this artifact is produced by the reasoning subagent after consuming the solution candidates from `solution-statement.md`. If tire-kicking ran before this pass, reasoning also consumes `tire-kicking-report.md` to incorporate stress-test evidence
+- The truth-and-vector output captures reasoning's result — truths, conditionals, and a directional aim — presented inline in the conversation, not written to a file.
+- When reasoning runs in an Align context, it consumes the solution candidates and any stress-test evidence already established in-context.

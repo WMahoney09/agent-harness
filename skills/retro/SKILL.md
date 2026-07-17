@@ -29,7 +29,7 @@ You are running a retrospective — not a status report. Your job is to surface 
 
 Before sharing observations, orient yourself:
 - Check the git log for the work — project repo for project work, agent-harness repo for harness work
-- Read any artifacts produced during the session (e.g., `docs/workstreams/<slug>/` for project work; modified skill or hook files for harness work)
+- Read any artifacts produced during the session (e.g., the plan file at `docs/plans/<work-item>.plan.md` for project work; modified skill or hook files for harness work)
 - Reflect on the conversation: where did things flow, where did they stall?
 - Note any deviations from expected sequence or convention
 

@@ -214,7 +214,7 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 
 ## Artifact
 
-Produces `review-issues.md` in `docs/workstreams/<work-item>/`. See `ARTIFACT.md` for the full template. Generated when the review pass is complete.
+Presents the review report inline (not written to a file). See `ARTIFACT.md` for the full template. Produced when the review pass is complete.
 
 ## Closure Criteria
 

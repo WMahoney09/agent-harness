@@ -1,6 +1,6 @@
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
+- **Storage:** Inline — output is produced in-context, not saved to a file
 - **Filename:** Inline — output is produced in-context, not saved to a file
 - **Trigger:** Whenever an estimate is requested
 

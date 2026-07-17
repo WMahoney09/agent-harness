@@ -1,7 +1,7 @@
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
-- **Filename:** `review-issues.md`
+- **Storage:** Inline — output is produced in-context, not saved to a file
+- **Filename:** N/A
 - **Trigger:** When the review pass is complete
 
 ## Template
@@ -74,5 +74,5 @@
 
 ## Notes
 
-- The review report format mirrors the structure defined in `review/SKILL.md` — this ARTIFACT.md defines the file-based version for pipeline handoffs
-- In the leeroyyyyy pipeline, `review-issues.md` is consumed by the triage subagent
+- This ARTIFACT.md defines the format for the review report, which is presented inline in the conversation — the same structure defined in `review/SKILL.md`.
+- When review feeds triage, the report is handed off in-context.

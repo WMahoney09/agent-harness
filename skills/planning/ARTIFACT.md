@@ -1,6 +1,6 @@
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
+- **Storage:** `docs/plans/<work-item>.plan.md` at the nearest project root
 - **Filename:** `<work-item>.plan.md`
 - **Trigger:** When the plan document is finalized and ready for pre-flight
 
@@ -35,7 +35,7 @@ The plan follows a Phase → Step → Task breakdown. The Progress section is up
 
 ## Notes
 
-- Plan file naming follows `<work-item>.plan.md` where `<work-item>` matches the workstream slug
+- Plan file naming follows `<work-item>.plan.md` where `<work-item>` is a slug derived from the plan title (lowercase, hyphenated, concise)
 - The Progress section uses checkbox syntax: `- [ ]` for pending, `- [x]` for complete
 - `produce` marks phases complete and commits the plan file update as a `[plan]` commit at each phase boundary
 - `/atomize` runs after pre-flight to ensure all plan phases score ≤ LOE 2 before execution begins

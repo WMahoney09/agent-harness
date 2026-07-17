@@ -9,7 +9,7 @@ Every `ARTIFACT.md` must begin with this block:
 ```
 ## Meta
 
-- **Storage:** `docs/workstreams/<work-item>/` at the nearest project root
+- **Storage:** `Inline` by default — or a concrete target when the artifact is persisted (the plan file, a GitHub PR)
 - **Filename:** <defined per skill>
 - **Trigger:** <when to generate this artifact>
 ```
@@ -46,11 +46,11 @@ See `atomize/ARTIFACT.md` as the canonical example of this pattern.
 
 ## Storage Convention
 
-All artifacts live in `docs/workstreams/<work-item>/` at the nearest project root. The `<work-item>` slug is established by the `understanding` skill when it creates the workstream directory.
+Skill outputs are **inline by default** — produced in-context in the conversation, not written to disk. Running a skill leaves no files behind.
 
-Artifacts live in `docs/` because they are project documentation, not tool configuration. Placing them outside `.claude/` avoids permission prompts and makes them discoverable alongside other project reference material (`docs/reference/`).
+The one persisted exception is the **plan file**: `planning` writes `docs/plans/<work-item>.plan.md` at the nearest project root, because `pre-flight`, `atomize`, and `produce` operate on it — and `produce` commits `[plan]` progress against it as work proceeds. The `<work-item>` slug is derived from the plan title.
 
-Artifacts must be project-local — never saved to tool-specific directories like `.claude/*`, `.cursor/*`, or home directory conventions like `~/.claude/*`.
+Any persisted artifact must be project-local — never saved to tool-specific directories like `.claude/*`, `.cursor/*`, or home directory conventions like `~/.claude/*`.
 
 ## Next Step Block Convention
 
