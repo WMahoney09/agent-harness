@@ -75,5 +75,6 @@
   "autoMemoryEnabled": false,
   "theme": "dark-daltonized",
   "editorMode": "vim",
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "model": "claude-fable-5[1m]"
 }

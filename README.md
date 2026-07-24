@@ -72,6 +72,7 @@ Tools for exploring problems and building clarity. Primarily for human-paired wo
 - **`/understanding`** — Build shared understanding of a problem through discovery. Produces `problem-statement.md`.
 - **`/clarify`** — Ask clarifying questions to sharpen understanding.
 - **`/reasoning`** — Extract truths, conditionals, and a directional vector from complex problems.
+- **`/terse`** — Respond in terse bullet form; bare `/terse` resynthesizes the previous response for quick scanning.
 
 ### Plan
 
