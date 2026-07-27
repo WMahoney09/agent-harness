@@ -43,6 +43,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/gnar-statusline.sh",
@@ -75,6 +76,5 @@
   "autoMemoryEnabled": false,
   "theme": "dark-daltonized",
   "editorMode": "vim",
-  "skipAutoPermissionPrompt": true,
-  "model": "claude-fable-5[1m]"
+  "skipAutoPermissionPrompt": true
 }
