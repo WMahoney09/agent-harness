@@ -28,6 +28,10 @@ Closes #<issue-number>
 - [ ] <verification step>
 - [ ] <verification step>
 - [ ] <additional steps as needed>
+
+## Known issues
+
+- <unresolved finding, and why it was not addressed>
 ```
 
 ### Section guidance
@@ -39,6 +43,8 @@ Closes #<issue-number>
 **Summary** — Start with a prose overview (1–8 sentences), then a bulleted list. The first two bullets should summarize the problem and the solution. Remaining bullets describe specific changes.
 
 **Test plan** — A checkbox list of steps a reviewer can follow to verify the changes. Describe what to check, not how the code works.
+
+**Known issues** — Conditional. Include only when the change ships with a problem its author already knows about: a Critical or Major review finding that was not resolved, a deliberate limitation, a deferred edge case. State the issue and why it was left. Omit the section entirely when there is nothing to declare — an empty "Known issues" heading reads as an oversight. This is where `/produce` puts findings that survived its revision cycle.
 
 ## Notes
 

@@ -141,11 +141,13 @@ Proceed to Stage 4 when either no Critical or Major findings remain, or the cap 
 
 ## Stage 4: Deliver
 
-The orchestrator opens the pull request itself — do not delegate this.
+**The pull request is this skill's artifact.** `/produce` has no `ARTIFACT.md` of its own by design — `/pull-request` owns the PR format, and duplicating it here would create two specs to keep in sync. The commits along the way are intermediate state; the PR is what the user comes back to.
+
+The orchestrator opens it itself — do not delegate this.
 
 1. Confirm the working tree is clean and all work is committed
-2. Invoke `/pull-request`
-3. In the PR description, include what the review cycle found and fixed, plus any surviving findings under "Known issues"
+2. Invoke `/pull-request`, which supplies the description structure
+3. Fold the review cycle into that structure: what was found and fixed belongs in the Summary bullets, and any surviving Critical or Major findings go under a `## Known issues` section
 
 Note the interaction with `/review`: once the PR exists, a later `/review #N` will post its findings to it unattended. That is the intended follow-up, not part of this skill. `/produce` finishes at an open PR with no review posted on it.
 
