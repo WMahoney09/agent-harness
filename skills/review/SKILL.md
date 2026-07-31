@@ -1,7 +1,7 @@
 ---
 name: review
 description: |
-  Technical peer review of code changes — local diff or a specific pull request. Covers security, architecture, correctness, tests, and accessibility. Produces a severity-graded report with a go/no-go recommendation.
+  Technical peer review of code changes — local diff or a specific pull request. Covers security, architecture, correctness, tests, and accessibility. Reports Critical and Major findings with a go/no-go recommendation, then publishes to the PR when one exists. `/review full` adds Minor, Gaps, and Opportunities; `/review local` keeps the report inline.
   TRIGGER when: the user asks for a code review ("review this", "review the PR", "review my changes", "can you look over this", "code review"), or references a PR that needs review ("what do you think of PR #N", "check PR #N").
 ---
 
@@ -14,6 +14,49 @@ This skill conducts a technical peer review of a set of code changes — either 
 - **`/review`** — Review local changes (current branch diff against the base branch). Use after `/produce` to verify the result before opening a PR.
 - **`/review #N`** — Review pull request #N in the current repo.
 - **`/review #N owner/repo`** — Review pull request #N in a different repo.
+
+Two optional keywords modify the run. Both are positional and may appear in any order alongside the target (`/review full #12`, `/review #12 local`, `/review local full`):
+
+- **`full`** — Report all sections, including Minor, Gaps & Inconsistencies, and Opportunities.
+- **`local`** — Keep the report inline in the conversation. Never publish to GitHub.
+
+## Modes
+
+Two independent axes. Parse them separately.
+
+### Report scope — what reaches the page
+
+**Default: Critical and Major only.** The report is Summary → Critical → Major → Recommendation. Minor findings, Gaps & Inconsistencies, and Opportunities are omitted.
+
+This is a **reporting** filter, not an **analysis** filter. Still evaluate every in-scope dimension across every changed file — severity grading is only meaningful if everything was looked at, and a finding that appears cosmetic on first read is often Major once traced. Suppress at the point of writing, not the point of looking.
+
+Genuine gaps do not vanish, they get graded. Missing test coverage on changed behavior is already defined as Major (see Severity Definitions) — it belongs in **Major**, not in a separate bucket. A gap that grades below Major is omitted along with the other Minor findings.
+
+**`full`** restores all sections, matching the historical output.
+
+### Delivery — where the report goes
+
+**Default: publish when a pull request exists.**
+
+- **`/review #N`** — After presenting the report inline, hand off to `/publish-review #N` to post the findings to the PR.
+- **`/review` (no target)** — After presenting the report inline, check whether the current branch has an open PR:
+  ```
+  gh pr view --json number,url
+  ```
+  If a PR exists, hand off to `/publish-review` with that number. If the command fails or reports no PR, the review stays inline — say so in one line (`No open PR for this branch — review is inline only.`) and stop. Do not offer to open one; `/pull-request` owns that.
+- **`local`** — Skip the delivery step entirely, whatever the target. `/review local #12` reviews PR #12 and reports inline without posting.
+
+**The handoff is unattended.** `/review` is a send-it-and-walk-away command. Invoke `/publish-review` in its unattended mode: it skips the confirmation gate and posts directly. Do not ask whether to publish, do not ask which findings to include, do not present the mapping for approval. The user invoked `/review #N` expecting to come back to a review sitting on the PR.
+
+This is safe by construction, not by supervision:
+
+- The review event is always `COMMENT` — never approve or request-changes. The `block-pr-review-state.sh` hook enforces this independently.
+- Findings already covered by an existing comment are skipped, which is the documented default anyway.
+- PR review comments are deletable and resolvable, so a bad post is recoverable.
+
+Every ambiguity that would have been a question becomes a documented default — see `/publish-review` → Unattended Mode. If a situation arises that has no safe default, stop and report rather than guess; do not post a partial review.
+
+`local` is the escape hatch. If the user wants to read findings before anything reaches GitHub, that is what `/review local #N` is for.
 
 ## Goal
 
@@ -43,6 +86,8 @@ This is a **peer review between equals**. Treat the PR author as a fellow contri
 **Default: quick pass.** Scan all changes, identify the landscape of issues, then drill into anything that warrants closer inspection.
 
 If the user specifies depth in the invocation (e.g., "thorough review of PR #3"), adjust accordingly.
+
+Depth is independent of report scope. `full` widens what gets reported, not how hard you look — a default-scope review is just as thorough, it simply prints less. "Thorough" widens how hard you look and can apply to either scope.
 
 ## Workflow
 
@@ -147,6 +192,10 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 
 ---
 
+#### Full Scope Only
+
+The three sections below are included **only** when the invocation carries `full`. In default scope, omit them entirely — no headings, no "None found" placeholders.
+
 **Minor Issues**
 > Non-blocking. Worth addressing but won't hold up a merge.
 
@@ -185,6 +234,8 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 
 ---
 
+#### Always Included
+
 **Recommendation**
 
 **Go** / **No-Go** / **Go with conditions**
@@ -192,6 +243,17 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 [1–3 sentence rationale. For "Go with conditions," list what must be addressed before merge.]
 
 ---
+
+### Step 5: Deliver
+
+Follow the delivery rules in **Modes → Delivery** above.
+
+- `local` in the invocation, or no open PR for the target → stop here. The inline report is the deliverable.
+- Otherwise → invoke `/publish-review #N` in unattended mode. Post without confirmation.
+
+Do not re-derive or re-summarize the findings for the handoff. `/publish-review` reads the report out of conversation context (its Step 1), so the inline report above is the input it consumes.
+
+Close by reporting what was posted — counts by bucket and the review URL — so the outcome is visible on return.
 
 ## Severity Definitions
 
@@ -214,7 +276,9 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 
 ## Artifact
 
-Presents the review report inline (not written to a file). See `ARTIFACT.md` for the full template. Produced when the review pass is complete.
+Presents the review report inline (not written to a file). See `ARTIFACT.md` for the full template and the default-scope variant. Produced when the review pass is complete.
+
+When delivery is in play, the GitHub review object is a second artifact — owned and documented by `/publish-review`.
 
 ## Closure Criteria
 
@@ -223,8 +287,9 @@ The review is complete when:
 - [ ] All changed files have been evaluated against the in-scope dimensions
 - [ ] Findings are categorized by severity
 - [ ] Every finding includes location, impact, and a suggestion
-- [ ] Gaps and opportunities are documented
 - [ ] A go/no-go recommendation is stated with reasoning
+- [ ] `full` only — gaps and opportunities are documented
+- [ ] Delivery is resolved: handed off to `/publish-review`, or explicitly reported as inline-only
 
 ## Notes
 
@@ -233,3 +298,5 @@ The review is complete when:
 - "Quick pass" means broad coverage at appropriate depth, not skipping dimensions. If something looks fine, say so briefly and move on.
 - If a finding needs deeper investigation, do it. The default depth is a starting point, not a ceiling.
 - Drill into any finding that warrants it before closing the report.
+- Default scope hides Minor findings; it does not license grading a Major down to Minor to shorten the report. Grade honestly, then filter.
+- Never post to GitHub from this skill directly. Delivery goes through `/publish-review` so the confirmation gate and comment-mode-only rule are enforced in one place.

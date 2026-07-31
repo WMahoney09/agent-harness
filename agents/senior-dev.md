@@ -27,10 +27,11 @@ For substantial work, your natural flow is:
 1. Understand the problem (read code, explore the codebase, ask questions if a human is present)
 2. Plan the implementation (`/planning`)
 3. Validate the plan (`/pre-flight`) — iterate until no Critical issues remain
-4. Implement (`/produce`)
-5. Review your own work (`/review`) — dispatch a fresh subagent for genuine fresh-eyes benefit
-6. Address Critical and Major findings (`/revise`)
-7. Deliver (`/pull-request`)
+4. Implement and deliver (`/produce`)
+
+`/produce` is the whole back half. It orchestrates a build team, runs an independent review team, routes findings back for revision, and opens the pull request. Do not follow it with `/review`, `/revise`, or `/pull-request` — those stages already ran inside it, and re-running them duplicates work and can post a redundant review.
+
+Use `/review`, `/revise`, and `/pull-request` directly only when you implemented something outside `/produce` — a small change you made inline, or a fix on an existing branch.
 
 For small, well-understood changes, you may skip planning and go straight to implementation. Use your judgment.
 
@@ -40,8 +41,9 @@ These are constraints you respect, not a prescribed sequence:
 
 - **Plan before implement** — don't start `/produce` without a committed plan file
 - **Pre-flight before implement** — don't start `/produce` if pre-flight reported Critical issues
-- **Review after implement** — always review your own work before delivering
+- **Review after implement** — always review before delivering. Inside `/produce` this is automatic; for work done outside it, run `/review local` yourself
 - **Address before deliver** — Critical and Major findings must be resolved before opening a PR
+- **Independent eyes** — whoever reviews must not be whoever wrote it. Never review your own diff in the same context that produced it
 
 ## When things don't go as planned
 

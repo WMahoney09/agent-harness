@@ -43,7 +43,9 @@ gh pr view #N --json title,body,baseRefName,headRefName,author
 
 ### 2. Review Skill Output
 
-When `/review` output is present in the conversation, ingest it directly. The review output is already structured (Critical / Major / Minor / Gaps / Opportunities) — use those categories as input to triage's prioritization pass.
+When `/review` output is present in the conversation, ingest it directly. The review output is already structured — use its categories as input to triage's prioritization pass.
+
+Two shapes are possible. Default `/review` output carries **Critical / Major** only. `/review full` adds **Minor / Gaps / Opportunities**. Ingest whichever sections are present; absent sections mean the review was run in default scope, not that it found nothing. Do not treat a missing Minor section as "no minor issues" — if the user needs that granularity, they can re-run `/review full`.
 
 ### 3. Conversational List
 

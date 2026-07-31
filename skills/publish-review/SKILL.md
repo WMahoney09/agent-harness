@@ -14,6 +14,30 @@ This skill takes `/review` findings from conversation context and posts them as 
 - **`/publish-review #N`** — Post findings to PR #N in the current repo
 - **`/publish-review #N owner/repo`** — Post findings to PR #N in another repo
 
+## Modes
+
+### Interactive (default)
+
+Direct invocation by the user. Step 5 presents the full mapping and waits for confirmation before posting. This is the mode for any hand-driven publish.
+
+### Unattended
+
+Invoked as the delivery step of `/review`, which is a send-it-and-walk-away command. **Skip Step 5 entirely** — no mapping presentation, no confirmation, no questions. Run Steps 1–4, then post in Step 6 and report in Step 7.
+
+Every branch that would have prompted the user resolves to a fixed default instead:
+
+| Situation | Interactive | Unattended |
+|---|---|---|
+| Finding already covered by an existing comment | Ask, default skip | Skip silently, count it in the Step 7 report |
+| Review output targets a different PR than the publish target | Warn, ask to proceed | **Abort.** Post nothing and report the mismatch |
+| Thread matched as resolved by a re-review | Show, then resolve | Resolve |
+| API 422 on a comment | Retry at a coarser anchor | Retry at a coarser anchor |
+| No findings left to post | Report, post nothing | Report, post nothing |
+
+The cross-PR mismatch is the one hard stop. Cross-posting a review onto the wrong pull request is the failure that is loud, public, and confusing to unwind — never guess it right. In the normal `/review #N` → `/publish-review #N` handoff the numbers come from the same invocation, so this should not fire; if it does, something upstream is wrong and stopping is correct.
+
+If any *other* situation arises with no safe default, stop and report. Do not post a partial or speculative review.
+
 ## Goal
 
 Deliver `/review` findings directly onto a pull request as a single GitHub review with inline comments anchored to diff lines, so reviewers see each finding in the context where it matters.
@@ -95,7 +119,7 @@ Match each resolved finding to an unresolved thread by comparing the finding des
 **Inline comment format:**
 
 ```
-**[Severity]** Finding description
+🤖 Claude: **[Severity]** Finding description
 
 _Why it matters:_ Specific risk or consequence.
 
@@ -104,12 +128,15 @@ Suggestion or recommended fix.
 
 - Include "Why it matters" for Critical and Major findings only
 - Keep each comment self-contained — a reviewer should understand the issue without seeing the full report
+- The `🤖 Claude:` prefix is required on every comment and on the review body, per the global `CLAUDE.md` GitHub-identity rule. In unattended mode nobody proofreads the post before it goes out, so this is not optional
 
 **Top-level body format:**
 
 Follow the template defined in `ARTIFACT.md`.
 
 ### Step 5: Present Mapping for Confirmation
+
+**Interactive mode only.** In unattended mode, skip this step entirely and go straight to Step 6 using the defaults in the Modes table.
 
 Present the full plan before posting. Show:
 
@@ -203,14 +230,15 @@ The publish-review is complete when:
 - [ ] Findings have been extracted from the most recent `/review` output
 - [ ] The PR diff has been fetched and findings mapped to buckets
 - [ ] Existing PR comments have been checked for overlap
-- [ ] The full mapping has been presented and confirmed by the user
+- [ ] Interactive mode only — the full mapping has been presented and confirmed by the user
 - [ ] The review has been posted as a single atomic GitHub review with event type `COMMENT` (if new findings exist)
 - [ ] Addressed threads have been resolved via GraphQL (re-review only)
 - [ ] Completion has been reported with counts and review URL
 
 ## Notes
 
-- This skill never approves or requests changes — those are human decisions. The review event is always `COMMENT`.
+- This skill never approves or requests changes — those are human decisions. The review event is always `COMMENT`. This holds in both modes.
 - All comments are posted as a single grouped review — one notification, dismissable as a unit.
-- The confirmation gate is mandatory. Never post without user confirmation.
+- The confirmation gate is mandatory in interactive mode. Never post without user confirmation when invoked directly.
+- Unattended mode exists because `/review` is a walk-away command, not because confirmation is optional in general. Do not skip the gate on a direct `/publish-review` invocation just because the user seems in a hurry.
 - This skill only publishes findings — it does not generate them. `/review` is the upstream skill.

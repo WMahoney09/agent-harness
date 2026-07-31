@@ -4,7 +4,14 @@
 - **Filename:** N/A
 - **Trigger:** When the review pass is complete
 
-## Template
+## Scope Variants
+
+Two shapes, selected by the invocation:
+
+- **Default (`/review`)** — Header → Critical → Major → Recommendation. Minor, Gaps & Inconsistencies, and Opportunities are omitted entirely, headings included.
+- **Full (`/review full`)** — the complete template below.
+
+## Template (full)
 
 ```markdown
 # Review Issues

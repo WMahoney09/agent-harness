@@ -2,14 +2,14 @@
 
 - **Storage:** GitHub pull request review (not a local file)
 - **Filename:** N/A — the artifact is the GitHub review object
-- **Trigger:** When the user confirms the finding-to-comment mapping and the review is posted
+- **Trigger:** Interactive mode — when the user confirms the finding-to-comment mapping and the review is posted. Unattended mode — as soon as the mapping is built.
 
 ## Template
 
 ### Top-level review body
 
 ```markdown
-## Agentic Review
+🤖 Claude: technical review of this PR.
 
 **PR:** #N — title
 **Recommendation:** Go / No-Go / Go with conditions
@@ -43,15 +43,14 @@
 
 - **[Severity]** Finding description — `file:line`
 
----
-
-*Generated with help from Claude*
 ```
+
+The `🤖 Claude:` banner on the first line is mandatory, per the global `CLAUDE.md` GitHub-identity rule — the review posts under Will's account but is not authored by him. It matters most in unattended mode, where nobody reads the body before it goes out. Do not replace it with a trailing "generated with Claude" footer, and do not write the body in Will's voice ("I confirmed", "my call").
 
 ### Inline comment format
 
 ```markdown
-**[Severity]** Finding description
+🤖 Claude: **[Severity]** Finding description
 
 _Why it matters:_ Specific risk or consequence.
 
@@ -60,6 +59,7 @@ Suggestion or recommended fix.
 
 - "Why it matters" is included for Critical and Major findings only
 - Minor findings include severity, description, and suggestion
+- Every inline comment carries the `🤖 Claude:` prefix too. Inline comments detach from the review body — they appear alone in the diff view and in email notifications, so the body's banner does not cover them
 
 ## Notes
 

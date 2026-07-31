@@ -58,8 +58,9 @@ Logical constraints that agents respect. Not a prescribed sequence — agents de
 
 1. **Plan before implement** — `/produce` requires a committed plan file
 2. **Pre-flight before implement** — `/pre-flight` must report no Critical issues before `/produce` runs
-3. **Review after implement** — `/review` must run after `/produce`, ideally via a fresh agent context
-4. **Address before deliver** — Critical/Major findings from `/review` must be addressed via `/revise` before `/pull-request`
+3. **Review after implement** — review must run against implemented code, from a context that did not write it. `/produce` satisfies this internally with an independent review team; work done outside `/produce` needs `/review local` run explicitly
+4. **Address before deliver** — Critical/Major findings must be addressed before `/pull-request`
+5. **Nothing outward-facing before delivery** — no review is posted to GitHub until a PR exists. Reviewers run `/review local` mid-flight
 
 ---
 
@@ -86,7 +87,7 @@ Tools for defining and validating the work.
 
 Tools for building the work.
 
-- **`/produce`** — Execute an implementation plan autonomously with semantically coherent atomic commits.
+- **`/produce`** — Execute an implementation plan autonomously, end to end. Orchestrates a build team, an independent review team, a bounded revision cycle, and opens the PR. Owns all commits itself.
 - **`/commit`** — Stage and commit with typed convention (`[plan]`, `[docs]`, `[code]`).
 
 ### Deliver
@@ -94,15 +95,18 @@ Tools for building the work.
 Tools for shipping and iterating on the work.
 
 - **`/pull-request`** — Open a PR with structured description, issue links, and test plan.
-- **`/review`** — Technical peer review covering security, architecture, correctness, tests, accessibility. Produces `review-issues.md`.
+- **`/review`** — Technical peer review covering security, architecture, correctness, tests, accessibility. Reports Critical and Major inline, then publishes to the PR unattended when one exists. `/review full` adds Minor, Gaps, and Opportunities; `/review local` never posts.
 - **`/triage`** — Ingest feedback and group into unified, prioritized revisions. Produces `triage-report.md`.
 - **`/revise`** — Address a discrete revision with alignment check and implementation.
 - **`/reply`** — Close the feedback loop by replying to PR comments with addressing commits.
-- **`/publish-review`** — Publish review findings as inline PR comments anchored to diff lines.
+- **`/publish-review`** — Publish review findings as inline PR comments anchored to diff lines. Confirms before posting when invoked directly; posts unattended when called by `/review`.
 
-**Two paths to revision:**
-- **Self-review:** `/review` → `/revise` — review output feeds directly into revise.
+**Three paths to revision:**
+- **Orchestrated:** inside `/produce` — the review team's findings route back to the build agents that wrote the code, bounded at two rounds. No user involvement.
+- **Self-review:** `/review local` → `/revise` — review output feeds directly into revise. Use for work done outside `/produce`.
 - **External feedback:** PR comments → `/triage` → `/revise` — triage normalizes unstructured feedback.
+
+Skills in **Deliver** are for work done outside `/produce`. A `/produce` run performs its own review, revision, and PR steps internally — running them again afterward duplicates the work.
 
 ### Reflect
 

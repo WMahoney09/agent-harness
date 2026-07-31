@@ -1,40 +1,169 @@
 ---
 name: produce
 description: |
-  Execute the implementation plan autonomously with intelligent atomic commits. Agent manages work order and git history.
+  Execute the implementation plan autonomously with a build team, a review team, and intelligent atomic commits. Orchestrates implementation → review → revision → pull request without pausing for the user.
   TRIGGER when: a plan exists and the user wants autonomous execution ("produce this", "build it", "execute the plan", "go ahead and implement", "run produce", "start building", "implement the plan"), or when the user signals they want the agent to take over implementation without step-by-step pairing.
 ---
 
-# Produce: Autonomous Implementation with Intelligent Commits
+# Produce: Orchestrated Implementation to Pull Request
 
-Execute the implementation plan autonomously, with the agent making strategic decisions about work order and creating semantically coherent atomic commits.
+Execute the implementation plan end to end. The invoked agent acts as **orchestrator**: it delegates implementation to a build team, delegates review to an independent review team, routes findings back to the builders who wrote the code, and opens the pull request once the work has settled.
 
 ## Goal
 
-Complete the implementation plan without pause, managing:
-- **Work order** - Choosing which units to execute and in what order
-- **Commit strategy** - Creating atomic, logically grouped commits based on semantic relationships
-- **Git history** - Producing a clean, navigable commit history that tells the story of the implementation
+Take a committed plan from unstarted to a pull request awaiting human review, managing:
 
-## Plan Analysis
+- **Delegation** — which work goes to which agent, and what each one is told
+- **Work order** — which units execute, in what order, and what may run concurrently
+- **Commit strategy** — atomic, semantically coherent commits owned solely by the orchestrator
+- **Quality gate** — an independent review pass and a bounded revision cycle before delivery
 
-Before beginning implementation:
+The user's next interaction should be reading a pull request, not answering a question.
 
-- Review the full plan
-- Identify dependencies and execution order
-- Understand the logical groupings and concerns
-- Plan a work sequence that respects dependencies
+## Orchestration Model
 
-## Execution with Intelligent Commits
+### Roles
 
-### Core Principle: Semantic Coherence
+| Role | Who | Responsibility |
+|---|---|---|
+| **Orchestrator** | The agent that received `/produce` | Reads the plan, delegates, owns all git operations, opens the PR |
+| **Build team** | Named subagents, one per concurrent unit | Write code. Never commit, never push |
+| **Review team** | Independent subagents, one per review dimension | Find problems in what the build team produced. Never write code |
+
+The build and review teams must be **separate agents**. An agent that reviews its own work grades its own homework — the independence is the point of running a second team rather than asking the builders to double-check.
+
+### The orchestrator owns git
+
+**Build agents never run `git add`, `git commit`, `git push`, or `/commit`.** They write files and report what they changed. The orchestrator stages and commits.
+
+This is non-negotiable for two reasons:
+
+1. **The index is shared mutable state.** Concurrent `git add` from several agents races — one agent stages another's half-written work, and the resulting commits are neither atomic nor coherent.
+2. **The git history is the primary deliverable** (see Commit Semantics below). Semantic grouping is a whole-picture judgment. An agent that sees only its own slice cannot make it.
+
+Build agents report changed paths and a one-line description of the unit. The orchestrator decides what that means for commit boundaries.
+
+### When to fan out
+
+Fanning out costs real tokens and setup latency. Match the shape of the team to the shape of the plan.
+
+| Plan shape | Approach |
+|---|---|
+| Single phase, few files, LOE 1–2 | **Run inline.** No build team. The orchestrator implements directly, exactly as this skill worked before. |
+| Multiple phases, or a phase with independent steps | Fan out **within** each phase, one agent per independent step |
+| Any plan reaching the review stage | Always fan out the review team — independence is the value |
+
+Do not spawn a build team to write three lines in one file. State the choice in one line (`Plan is single-phase and touches 2 files — implementing inline.`) and proceed.
+
+### Concurrency rule: disjoint files only
+
+Two build agents may run concurrently **only if their file sets do not intersect.** Derive each step's file set from the plan before delegating.
+
+- **Disjoint** → run concurrently in a single message with multiple `Agent` calls.
+- **Overlapping** → run sequentially, in dependency order, one agent at a time.
+- **Overlapping and genuinely independent** → still sequential. Do not reach for `isolation: "worktree"`; merging divergent worktrees back together is a harder problem than waiting.
+
+Phases are always sequential — a later phase may depend on an earlier phase's output. This replaces the previous blanket "never simultaneously" rule with a narrower one that protects the same thing: never let two writers touch one file.
+
+### Name every agent
+
+Spawn build agents with an explicit `name` (`build-auth`, `build-migrations`, `build-ui`). Names make them addressable via `SendMessage`, which is what makes Stage 3 possible — a named agent still holds the context of why it wrote the code that way. A fresh `Agent` call does not.
+
+Keep a roster mapping each build agent's name to the files it owns. Stage 3 depends on it.
+
+## Stage 0: Plan Analysis
+
+Before delegating anything:
+
+- Read the full plan file
+- Identify phase dependencies and execution order
+- For each phase, determine which steps are independent and what files each touches
+- Decide inline vs. fan-out per the table above
+- Confirm the working tree is clean; if not, stop and report rather than commingling unrelated changes
+
+## Stage 1: Build
+
+For each phase, in order:
+
+1. Determine the phase's independent steps and their file sets.
+2. Spawn one named build agent per step, concurrently where file sets are disjoint.
+3. Each build agent's brief must contain:
+   - The specific plan steps and tasks it owns, quoted from the plan
+   - The exact files it is permitted to modify, and an instruction to touch nothing else
+   - Relevant codebase conventions and patterns to follow
+   - **An explicit instruction not to commit, stage, or push** — it reports changed paths instead
+   - An instruction to report blockers rather than inventing scope
+4. Wait for the phase's agents to finish.
+5. Review the reported changes as a whole, group them semantically, and commit via `/commit`.
+6. Update the plan file's Progress section and commit that separately as a `[plan]` commit.
+
+Every phase completes — code committed, plan updated — before the next begins.
+
+## Stage 2: Review
+
+Once all phases are built and committed, spawn the review team against the accumulated branch diff.
+
+Fan out one reviewer per `/review` dimension, concurrently — they only read, so there is no write conflict:
+
+- Security
+- Architecture
+- Correctness
+- Tests
+- Accessibility (skip when the diff touches no UI-producing files)
+
+Each reviewer invokes **`/review local`**. The `local` keyword is mandatory here: no pull request exists yet, and review findings must not reach GitHub mid-flight. The orchestrator opens the PR later, in Stage 4, once the code has settled.
+
+Collect the reviewers' reports and merge them:
+
+- Deduplicate findings that several reviewers raised about the same `file:line`
+- Keep the highest severity assigned to any duplicate
+- Discard findings about code the plan did not touch — note them in the summary as out-of-scope observations rather than acting on them
+
+Only **Critical** and **Major** findings enter Stage 3. Minor findings go in the final summary for the user to judge.
+
+## Stage 3: Revise
+
+Route each Critical and Major finding back to the build agent that owns the file, using `SendMessage` with that agent's name. It still holds the context of the original decision, which a fresh agent would have to reconstruct — and often reconstructs wrongly.
+
+- Finding in a file with a known owner → `SendMessage` to that owner
+- Finding spanning several owners → send to the owner of the file where the fix belongs, and tell it which other agents' code is involved
+- Finding in a file with no owner (inline-built work) → the orchestrator fixes it directly
+
+Revisions follow the same rules as the build stage: agents edit, the orchestrator commits. Group revision commits semantically like any other.
+
+### Bounded loop
+
+After revisions land, re-run the review team against the updated diff.
+
+**Cap the cycle at two revision rounds.** If Critical or Major findings survive two full rounds, stop revising and carry them into the PR description under a "Known issues" heading. An unbounded review–revise loop can oscillate — two agents disagreeing about the right fix will happily trade edits until the budget is gone.
+
+Proceed to Stage 4 when either no Critical or Major findings remain, or the cap is reached.
+
+## Stage 4: Deliver
+
+The orchestrator opens the pull request itself — do not delegate this.
+
+1. Confirm the working tree is clean and all work is committed
+2. Invoke `/pull-request`
+3. In the PR description, include what the review cycle found and fixed, plus any surviving findings under "Known issues"
+
+Note the interaction with `/review`: once the PR exists, a later `/review #N` will post its findings to it unattended. That is the intended follow-up, not part of this skill. `/produce` finishes at an open PR with no review posted on it.
+
+## Commit Semantics
+
+These rules govern the orchestrator's commits at every stage.
+
+### Core principle: semantic coherence
 
 Each commit should represent a **logically coherent unit of work**. Files changed in a commit should be related by:
+
 - **Feature/domain**: All parts of a User feature together, all parts of an Order feature separately
 - **Concern/layer**: All API changes together, all UI changes together, all migrations together
 - **Functional completeness**: Changes that must work together to provide a feature
 
-### Commit Grouping Examples
+Agent boundaries are not commit boundaries. If two build agents each produced half of one coherent feature, that is one commit. If one agent produced two unrelated concerns, that is two.
+
+### Commit grouping examples
 
 **Good** — cohesive units:
 - Login screen + login API route + session migration = **1 commit** (one feature end-to-end)
@@ -45,61 +174,53 @@ Each commit should represent a **logically coherent unit of work**. Files change
 - Order UI change + User API change = **do not combine**
 - User authentication + unrelated table cleanup = **do not combine**
 
-### Commit Atomicity Rules
+### Atomicity rules
 
 - **One logical concern per commit**: Changes are all related by domain, layer, or feature
-- **Commit when a unit is complete**: After finishing a task or step that forms a coherent unit
-- **Don't batch unrelated changes**: Just because work exists in the working directory doesn't mean it belongs together
+- **Commit when a unit is complete**: After a phase or revision produces a coherent unit
+- **Don't batch unrelated changes**: Work sitting in the working directory does not thereby belong together
 - **Preserve logical narrative**: Someone reading the commits should understand the progression of work
 
-### Execution Pattern
+**Commit if** the unit is complete, the files share a domain/feature/concern, and the code works.
+**Don't commit if** the unit is incomplete, the changes span unrelated concerns, or a dependency is still uncommitted.
 
-Every phase runs to completion before the next begins. Context isolation over throughput. When steps are independent, they can be executed in any order, but not simultaneously.
+After staging files, **invoke the `/commit` skill**. Never run `git commit` directly. The orchestrator decides **when** to commit and **what to stage**; `/commit` handles type classification, message formatting, and the commit itself.
 
-## Commit Decisions
+### Phase-boundary progress tracking
 
-At each natural break point, evaluate:
+After each plan phase:
 
-**Commit if:**
-- A task or step is complete and forms a coherent unit
-- The files changed all relate to the same domain/feature/concern
-- The code is tested and working
+1. Mark the phase row complete: `- [x] Phase N: <name>`
+2. Add a brief inline deviation note if the phase diverged from the plan
+3. Invoke `/commit` for the plan file update before starting the next phase
 
-**Don't commit if:**
-- The unit is incomplete
-- Changes belong to multiple unrelated concerns
-- There are uncommitted dependencies needed for this to work
-
-After staging files, **invoke the `/commit` skill** to create the commit. Do not run `git commit` directly. The agent decides **when** to commit and **what to stage**; `/commit` handles type classification, message formatting, and the actual commit.
-
-## Phase-Boundary Progress Tracking
-
-After completing each plan phase, update the plan file's Progress section:
-
-1. Mark the phase row as complete: `- [x] Phase N: <name>`
-2. If the phase deviated from the plan, add a brief inline deviation note
-3. Invoke `/commit` for the plan file update before moving to the next phase
-
-This produces a commit sequence of code commits for the implementation followed by a plan commit marking the phase complete, repeated for each plan phase.
+This produces code commits for the implementation followed by a `[plan]` commit marking the phase complete, repeated per phase.
 
 ## Deviation Handling
 
-If the agent encounters:
-- A blocker or issue it can't resolve — note it and skip that unit, continuing with others
-- A deviation from the plan — document it and explain the reasoning in the final summary
-- Ambiguity about grouping — choose the most logical grouping and note the decision
+- **A build agent reports a blocker** — do not silently reassign. Note it, skip that unit, continue with the others, and surface it in the final summary and the PR description.
+- **A build agent exceeds its file scope** — treat the extra changes as suspect. Review them directly before committing, or revert them and re-delegate with a tighter brief.
+- **A build agent returns null or dies** — its work is lost, not partially applied. Re-delegate the same brief once; if it fails again, implement that unit inline.
+- **Plan deviation** — document it and explain the reasoning in the final summary.
+- **Ambiguous grouping** — choose the most logical grouping and note the decision.
 
 ## Completion
 
-When all phases, steps, and tasks are complete, provide a summary:
-- List all commits made, grouped by concern/domain
-- Confirm all plan items are complete
-- Note any deviations from the plan
-- Confirm git history is clean and coherent
+When the PR is open, summarize:
+
+- The commits made, grouped by concern/domain
+- Which agents built what
+- What the review team found, by severity, and what was fixed
+- Any surviving Critical/Major findings and why they were not resolved
+- Minor findings, for the user to triage
+- Any plan deviations
+- The PR URL
 
 ## Notes
 
-- This is autopilot mode: the agent has full autonomy over work order and commits
-- The git history is the primary deliverable — it should be clean and navigable
-- Semantic coherence matters more than batch size; a 5-file commit is fine if they're all related
-- The agent should think like a human developer managing their own commits
+- This is autopilot mode. The orchestrator has full autonomy over delegation, work order, and commits, and should not stop to ask the user between stages.
+- Autonomy is not silence. Report stage transitions as they happen so a returning user can see where things stand.
+- The git history is the primary deliverable — it should be clean and navigable regardless of how many agents contributed to it.
+- Build and review teams stay separate. Never ask a build agent to review its own output.
+- Semantic coherence matters more than batch size; a 5-file commit is fine if the files are related.
+- Nothing posts to GitHub before Stage 4. Reviewers use `/review local`, and the PR is the first outward-facing artifact.
