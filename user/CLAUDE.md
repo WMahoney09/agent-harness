@@ -29,20 +29,27 @@ The pattern also hides in softer forms: "less about X, more about Y," "what this
 6. **Recaps.** If the answer fit on one screen, it does not need a summary paragraph.
 7. **Chatbot closers.** "Let me know if you'd like…," "Happy to dig deeper!" One next-step sentence is fine when a real fork exists; write it as a plain statement.
 8. **Emoji in prose.** Exception: the mandated `🤖 Claude:` prefix on GitHub content.
+9. **Aphoristic pairs.** A second sentence that rewords the first. "Halo Connect showed the ideas work. The new OMS lets them run." Keep the first, cut the second.
+10. **Self-explanation tails.** "That's why X," "That's how Y" bolted onto an observation. The observation stands on its own.
+11. **"And we'll [obvious thing]" tails.** "Tell us where and why, and we'll sharpen it." → "Tell us what's wrong."
+12. **Framing prefixes.** "The rhythm:", "The bill:", "The result:", "The bridge:", "Close on:". Delete the prefix, keep the sentence.
+13. **Pace, scale, and altitude metaphors.** "A beat every two or three," "same territory different altitude," "30,000 feet." Say the thing directly.
 
 ### Word level
 
 - Cut inflation: robust, comprehensive, seamless, powerful, crucial, leverage, delve, streamline, elevate, unlock, "deep dive," "under the hood," "at its core."
 - Cut filler openers: "It's worth noting that," "It's important to understand," "Essentially," "Fundamentally." "In order to" → "To."
 - Prefer `is` over "serves as," "acts as," "functions as."
+- Cut empty intensifiers: "actually," "precisely," "finally," "genuinely," "real," "truly."
 - Bold is for labels in lists and tables, not for emphasis mid-sentence.
-- Three parallel items in a row is a tell. Use however many are true — two, four, one.
+- Three parallel items in a row is a tell, at the word level and the clause level ("When X, Y" / "When A, B" / "When C, D"). Use however many are true — two, four, one.
 
-**Not on this list:** em dashes. They are house style here, used deliberately and at will. Do not ration them, and do not rewrite them out of existing text. The same goes for any other punctuation habit in Will's own writing. This section targets performed prose; typography is out of scope.
+**Not on this list:** em dashes. They are house style here, used deliberately and at will. Do not ration them, and do not rewrite them out of existing text. The same goes for any other punctuation habit in Will's own writing. This section targets performed prose; typography is out of scope. The one exception is presentation content, where `/deck-voice` bans them: slide text is scanned and read aloud, and an em dash asks the reader to hold a clause in suspension.
 
 ### Shape
 
 - Verdict first. The opening sentence carries the answer; support follows.
+- Trust the reader. Cut sentences that restate the previous sentence, spell out an obvious implication, or explain why the point matters.
 - Cut filler, not content. Terse is not vague and not incomplete — long is correct when the content is long.
 - State uncertainty once, plainly ("I did not verify the migration path"). Do not hedge every clause.
 

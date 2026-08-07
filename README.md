@@ -75,6 +75,12 @@ Tools for exploring problems and building clarity. Primarily for human-paired wo
 - **`/reasoning`** — Extract truths, conditionals, and a directional vector from complex problems.
 - **`/terse`** — Respond in terse bullet form; bare `/terse` resynthesizes the previous response for quick scanning.
 
+### Author
+
+Tools for shaping generated prose.
+
+- **`/deck-voice`** — Voice and cadence rules for generated presentation content: slide bodies, speaker notes, card copy, closers. Drafts new copy under the rules, or sweeps an existing deck into an `original → replacement` rewrite spec. Self-contained so it can be uploaded to Cowork, which does not read `user/CLAUDE.md`.
+
 ### Plan
 
 Tools for defining and validating the work.
