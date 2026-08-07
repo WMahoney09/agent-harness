@@ -8,8 +8,10 @@
 
 Two shapes, selected by the invocation:
 
-- **Default (`/review`)** — Header → Critical → Major → Recommendation. Minor, Gaps & Inconsistencies, and Opportunities are omitted entirely, headings included.
+- **Default (`/review`)** — Header → Previously Reported → Critical → Major → Minor → Recommendation. Gaps & Inconsistencies and Opportunities are omitted entirely, headings included.
 - **Full (`/review full`)** — the complete template below.
+
+**Previously Reported** appears on a re-review only. On round 1 it is omitted entirely, heading included.
 
 ## Template (full)
 
@@ -18,11 +20,25 @@ Two shapes, selected by the invocation:
 
 **Pull Request:** <title and number or "Local changes on [branch]">
 **Author:** <name or "you">
+**Round:** <1, or "N — reviewing {anchor_sha}..{head_sha}">
 **Summary:** <1–3 sentence description of what this change does>
 
 ---
 
 > **Formatting note:** Number top-level issues within each section using explicit sequential numbers (`1.`, `2.`, `3.`, …) — do not rely on markdown auto-numbering, since the output may be read in a TUI that doesn't auto-number.
+
+## Previously Reported
+> Re-review only. Every Critical and Major from earlier rounds, with exactly one disposition each.
+
+| # | Severity | Finding | Disposition | Detail |
+|---|---|---|---|---|
+| 1 | Critical | <short description> | Fixed | <what changed, file:line> |
+| 2 | Major | <short description> | Intentional | <author's stated reason> |
+| 3 | Major | <short description> | Deferred | <where the work went> |
+| 4 | Major | <short description> | Declined | <author's stated reason> |
+| 5 | Major | <short description> | **Open** | <no response; carried forward as Major #1> |
+
+Dispositions: **Fixed**, **Intentional**, **Deferred**, **Declined**, **Open**. The first four close the finding permanently — it does not repeat below and does not gate the approval. Open findings carry forward at their original severity.
 
 ## Critical Issues
 > Must be resolved before merge.
@@ -83,3 +99,5 @@ Two shapes, selected by the invocation:
 
 - This ARTIFACT.md defines the format for the review report, which is presented inline in the conversation — the same structure defined in `review/SKILL.md`.
 - When review feeds triage, the report is handed off in-context.
+- The **Previously Reported** table is the input `/publish-review` reads to resolve threads and to decide the review state. Dropping it on a re-review strands both.
+- Minor Issues is a default section. It publishes and never gates an approval.

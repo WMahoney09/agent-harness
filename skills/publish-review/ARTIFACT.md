@@ -12,8 +12,23 @@
 🤖 Claude: technical review of this PR.
 
 **PR:** #N — title
+**Round:** 1, or "N — reviewing {anchor_sha}..{head_sha}"
 **Recommendation:** Go / No-Go / Go with conditions
 **Rationale:** 1-2 sentence assessment.
+
+### Previously Reported
+
+(Re-review only. Omit this whole section on round 1.)
+
+| Severity | Finding | Disposition |
+|---|---|---|
+| Critical | description | Fixed — `file:line` |
+| Major | description | Declined — "author's stated reason" |
+| Major | description | Deferred — #48 |
+
+Closed for good; they will not appear in a later review. Open items from earlier rounds are listed with this round's findings below.
+
+---
 
 ### Summary
 
@@ -63,6 +78,9 @@ Suggestion or recommended fix.
 
 ## Notes
 
-- The review event is always `COMMENT` — never `REQUEST_CHANGES` or `APPROVE`
+- The review event is `COMMENT`, or `APPROVE` when every Critical and Major carries a disposition per `SKILL.md` → Step 4a — never `REQUEST_CHANGES`
+- An approval does not shorten the body. It posts the same full report it would have posted as a comment; the state is an additional signal, not a replacement for the write-up
+- On a re-review, the body opens with the prior findings and their dispositions before this round's findings. That table is what tells the author which items are closed for good
+- An approval that rests on a declined or deferred finding names it in the body, quoting the author's reason
 - All comments are posted as a single atomic review, not as individual comments
 - The body template scales with the findings — omit "Findings Not in Diff" if all findings are inline or file-level

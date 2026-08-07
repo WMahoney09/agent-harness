@@ -95,11 +95,11 @@ Tools for building the work.
 Tools for shipping and iterating on the work.
 
 - **`/pull-request`** — Open a PR with structured description, issue links, and test plan.
-- **`/review`** — Technical peer review covering security, architecture, correctness, tests, accessibility. Reports Critical and Major inline, then publishes to the PR unattended when one exists. `/review full` adds Minor, Gaps, and Opportunities; `/review local` never posts.
+- **`/review`** — Technical peer review covering security, architecture, correctness, tests, accessibility. Reports Critical, Major, and Minor inline, then publishes to the PR unattended when one exists. A re-review scopes to what changed since the last round and reconciles prior findings against the author's response. `/review full` adds Gaps and Opportunities; `/review local` never posts.
 - **`/triage`** — Ingest feedback and group into unified, prioritized revisions. Produces `triage-report.md`.
 - **`/revise`** — Address a discrete revision with alignment check and implementation.
 - **`/reply`** — Close the feedback loop by replying to PR comments with addressing commits.
-- **`/publish-review`** — Publish review findings as inline PR comments anchored to diff lines. Confirms before posting when invoked directly; posts unattended when called by `/review`.
+- **`/publish-review`** — Publish review findings as inline PR comments anchored to diff lines. Confirms before posting when invoked directly; posts unattended when called by `/review`. Approves once every Critical and Major on the PR carries a disposition; comments while any is open.
 
 **Three paths to revision:**
 - **Orchestrated:** inside `/produce` — the review team's findings route back to the build agents that wrote the code, bounded at two rounds. No user involvement.
@@ -123,7 +123,7 @@ Deterministic pre/post-tool-use hooks live in `hooks/` and are wired in `user/se
 
 | Hook | When it fires | What it does |
 |---|---|---|
-| `block-pr-review-state.sh` | `PreToolUse` on `Bash` | Blocks `gh pr review --approve`/`--request-changes` and equivalent `gh api .../reviews -f event=APPROVE/REQUEST_CHANGES`. Comment-mode is the only allowed state for reviews posted under Will's account. |
+| `block-pr-review-state.sh` | `PreToolUse` on `Bash` | Blocks `gh pr review --request-changes` and `gh api .../reviews` carrying `event=REQUEST_CHANGES`, inline or in an `--input` payload file. Request-changes is the one review state that is never posted under Will's account. Approve is deliberately *not* blocked here — its gate is a reading of the review report (every Critical and Major dispositioned) that only the `review` / `publish-review` skills can evaluate. |
 
 ---
 

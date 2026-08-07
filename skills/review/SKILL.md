@@ -1,7 +1,7 @@
 ---
 name: review
 description: |
-  Technical peer review of code changes — local diff or a specific pull request. Covers security, architecture, correctness, tests, and accessibility. Reports Critical and Major findings with a go/no-go recommendation, then publishes to the PR when one exists. `/review full` adds Minor, Gaps, and Opportunities; `/review local` keeps the report inline.
+  Technical peer review of code changes — local diff or a specific pull request. Covers security, architecture, correctness, tests, and accessibility. Reports Critical, Major, and Minor findings with a go/no-go recommendation, then publishes to the PR when one exists. Re-reviews scope to what changed since the last round and reconcile prior findings against the author's response. `/review full` adds Gaps and Opportunities; `/review local` keeps the report inline.
   TRIGGER when: the user asks for a code review ("review this", "review the PR", "review my changes", "can you look over this", "code review"), or references a PR that needs review ("what do you think of PR #N", "check PR #N").
 ---
 
@@ -26,13 +26,15 @@ Two independent axes. Parse them separately.
 
 ### Report scope — what reaches the page
 
-**Default: Critical and Major only.** The report is Summary → Critical → Major → Recommendation. Minor findings, Gaps & Inconsistencies, and Opportunities are omitted.
+**Default: Critical, Major, and Minor.** The report is Summary → Previously Reported → Critical → Major → Minor → Recommendation.
 
-This is a **reporting** filter, not an **analysis** filter. Still evaluate every in-scope dimension across every changed file — severity grading is only meaningful if everything was looked at, and a finding that appears cosmetic on first read is often Major once traced. Suppress at the point of writing, not the point of looking.
+Report everything you find, ordered by severity. Severity is a **priority signal for the author**, not a filter on what gets said — it tells them what to read first and what has to be dealt with before merge. Withholding a real finding to shorten the report just moves the work to a later round.
 
-Genuine gaps do not vanish, they get graded. Missing test coverage on changed behavior is already defined as Major (see Severity Definitions) — it belongs in **Major**, not in a separate bucket. A gap that grades below Major is omitted along with the other Minor findings.
+Genuine gaps get graded, not bucketed separately. Missing test coverage on changed behavior is already defined as Major (see Severity Definitions) — it belongs in **Major**.
 
-**`full`** restores all sections, matching the historical output.
+**`full`** adds **Gaps & Inconsistencies** and **Opportunities** on top of the default sections.
+
+Only Critical and Major findings gate an approval (see **Review State**). Minor findings publish so the author can pick them up, and never hold up a merge.
 
 ### Delivery — where the report goes
 
@@ -50,13 +52,42 @@ Genuine gaps do not vanish, they get graded. Missing test coverage on changed be
 
 This is safe by construction, not by supervision:
 
-- The review event is always `COMMENT` — never approve or request-changes. The `block-pr-review-state.sh` hook enforces this independently.
+- The review event is `COMMENT` while any blocking finding is open, and `APPROVE` once they are all dispositioned — never `REQUEST_CHANGES`, which has no exception. See **Review State** below for the gate.
 - Findings already covered by an existing comment are skipped, which is the documented default anyway.
-- PR review comments are deletable and resolvable, so a bad post is recoverable.
+- PR review comments are deletable and resolvable, and an approval is superseded by the next review and dismissed by the next push, so a bad post is recoverable either way.
 
 Every ambiguity that would have been a question becomes a documented default — see `/publish-review` → Unattended Mode. If a situation arises that has no safe default, stop and report rather than guess; do not post a partial review.
 
 `local` is the escape hatch. If the user wants to read findings before anything reaches GitHub, that is what `/review local #N` is for.
+
+### Review State — comment or approve
+
+**Approve when every Critical and Major finding on the PR carries a disposition.** That is the whole gate. It covers findings from prior rounds and the findings this round is about to post — a finding raised in this review has no disposition yet by definition, so any new Critical or Major means `COMMENT`.
+
+A first review that turns up no Critical or Major findings clears the gate on its face and approves.
+
+Minor findings never count. Neither do gaps or opportunities. They publish, the author picks them up or doesn't, and the merge is not held for them.
+
+#### Dispositions
+
+A finding closes when the author deals with it. Four ways, all equal, all permanent:
+
+| Disposition | Signal |
+|---|---|
+| **Fixed** | The code at the finding's location changed and the change addresses it. Verify by reading the current code — an author claim of "fixed" with no matching change is not fixed. |
+| **Intentional** | Author reply explaining why the code is the way it is. |
+| **Deferred** | Author reply pointing the work at another PR, issue, or follow-up fix. |
+| **Declined** | Author reply saying they are not doing it. |
+
+Anything else leaves the finding **open**: no reply and no change, or a reply that asks a question rather than answering one. An author question is not a disposition — answer it in this round's report and leave the finding open.
+
+**A closed finding is closed for good.** It does not appear in a later report, it does not get re-raised in different words, and it does not block the approval. Disagreeing with a decline is not grounds for raising it again — say so once to the user and leave it on the PR.
+
+#### Grading honesty
+
+Grade the code, then read the gate. Two pressures push the other way and both are worth naming: a Major downgraded to Minor buys a green check, and a finding raised late buys another round. Neither is a reason to move a severity. The gate is worth having only if the report feeding it is the report you would have written with no gate attached.
+
+This gate applies in both delivery modes. A `/review #N` that clears it approves unattended; `local` posts nothing at all, state included.
 
 ## Goal
 
@@ -94,7 +125,7 @@ Depth is independent of report scope. `full` widens what gets reported, not how 
 ### Step 1: Fetch the Changes
 
 **For a PR (`/review #N`):**
-- Use `gh pr view #N --json title,body,author,baseRefName,headRefName` to get PR metadata
+- Use `gh pr view #N --json title,body,author,baseRefName,headRefName,headRefOid` to get PR metadata
 - Use `gh pr diff #N` to get the full diff
 - Read the PR description for documented context, known tradeoffs, and intent
 
@@ -102,7 +133,58 @@ Depth is independent of report scope. `full` widens what gets reported, not how 
 - Use `git diff $(git merge-base HEAD origin/HEAD) HEAD` to get all changes on the current branch
 - If the base branch is unclear, use `git diff main...HEAD` or `git diff master...HEAD`
 
-### Step 2: Understand the Change
+### Step 2: Check for Prior Rounds
+
+**PR targets only.** Local reviews have no prior state — skip to Step 3.
+
+Fetch every review already posted on this PR by the authenticated account (`gh api user --jq .login`):
+
+```
+gh api repos/{owner}/{repo}/pulls/{N}/reviews
+gh api repos/{owner}/{repo}/pulls/{N}/comments
+```
+
+If none are by this account, this is **round 1**: review the full diff and skip the rest of this step.
+
+Otherwise this is a **re-review**. Two things follow.
+
+#### Scope to the delta
+
+The most recent prior review's `commit_id` is the anchor. Everything up to that SHA has already been reviewed at full depth, and its findings are already on the PR carrying whatever disposition they have. Review the delta only:
+
+```
+gh api repos/{owner}/{repo}/compare/{anchor_sha}...{head_sha}
+```
+
+Treat those files and hunks as the change under review for Steps 3 and 4, at full depth across every in-scope dimension. Code that has not moved since the anchor is out of scope — do not re-scan it and do not raise new findings against it.
+
+If the compare call fails because the anchor is unreachable (force-push, rebase, squash), fall back to the full diff and say so in one line at the top of the report: `Prior review anchor unreachable after a force-push — this round re-reviewed the full diff.`
+
+#### Reconcile prior findings
+
+Prior findings are the inline comments and review bodies posted by this account, stamped `🤖 Claude: **[Severity]**`. For each one, determine its disposition per the table in **Review State**:
+
+```
+gh api graphql -f query='query { repository(owner: "{owner}", name: "{repo}") {
+  pullRequest(number: N) {
+    reviewThreads(first: 100) {
+      nodes { id isResolved isOutdated
+        comments(first: 20) { nodes { author { login } body } } }
+    }
+  }
+} }'
+```
+
+- A reply from anyone other than the reviewer account is a disposition — read it and classify as Intentional, Deferred, or Declined. Be generous: any substantive response counts. Nobody should have to argue with a bot to close an item.
+- A resolved thread is a disposition even with no reply.
+- For a finding with no reply, read the current code at that location. Changed and addressed → **Fixed**. Unchanged → **open**.
+- A reply that asks a question is not a disposition. Answer it in this round's report and leave the finding open.
+
+Findings that resolve to any disposition are reported in **Previously Reported** with that disposition and then dropped from the active sections — they are closed permanently. Open findings carry forward into this round's Critical/Major/Minor sections at their original severity, restated verbatim rather than reworded.
+
+Body-only findings from a prior round have no thread to reply to, so they can only be dispositioned by a code change. If one is still open, anchor it inline this round if the delta makes that possible, so the author has somewhere to answer.
+
+### Step 3: Understand the Change
 
 Before evaluating, orient yourself:
 - What is the purpose of this change? (from PR title, description, or commit messages)
@@ -112,9 +194,9 @@ Before evaluating, orient yourself:
 
 Use local codebase knowledge to understand context: existing patterns, surrounding code, architectural conventions.
 
-### Step 3: Conduct the Review
+### Step 4: Conduct the Review
 
-Work through each in-scope dimension for every changed file:
+Work through each in-scope dimension for every changed file — on a re-review, "changed" means the delta scoped in Step 2:
 
 #### Security
 - Unsanitized inputs, SQL injection, XSS vectors
@@ -148,17 +230,31 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 - ARIA roles or attributes misused or missing
 - Screen reader announcements for dynamic content
 
-### Step 4: Produce the Report
+### Step 5: Produce the Report
 
 #### Report Format
 
 **Pull Request:** [title and number or "Local changes on [branch]"]
 **Author:** [name or "you"]
+**Round:** [1, or "N — reviewing {anchor_sha}..{head_sha}"]
 **Summary:** [1–3 sentence plain-language description of what this change does]
 
 ---
 
 > **Formatting note:** Within each section below, number top-level issues with explicit sequential numbers (`1.`, `2.`, `3.`, …) rather than relying on markdown auto-numbering — the output may be rendered in a TUI that doesn't auto-number. Sub-bullets (Where / Why it matters / Suggestion) stay as indented bullets.
+
+**Previously Reported**
+> Re-review only. Findings from earlier rounds and what became of them. Omit this section entirely on round 1.
+
+| # | Severity | Finding | Disposition | Detail |
+|---|---|---|---|---|
+| 1 | Critical | [short description] | Fixed | [what changed, file:line] |
+| 2 | Major | [short description] | Declined | [author's stated reason] |
+| 3 | Major | [short description] | **Open** | [no response; carried forward as Major #1 below] |
+
+Every prior Critical and Major appears here with exactly one disposition. Dispositioned findings are closed and are not repeated below. Open ones carry forward into the sections below at their original severity.
+
+---
 
 **Critical Issues**
 > Must be resolved before merge. These are blockers.
@@ -192,12 +288,8 @@ Applies to any HTML, JSX, TSX file, and JS/TS files that render UI:
 
 ---
 
-#### Full Scope Only
-
-The three sections below are included **only** when the invocation carries `full`. In default scope, omit them entirely — no headings, no "None found" placeholders.
-
 **Minor Issues**
-> Non-blocking. Worth addressing but won't hold up a merge.
+> Non-blocking. Worth addressing but won't hold up a merge, and never gates the approval.
 
 1. [Issue description]
    - **Where:** [file:line or area of the diff]
@@ -209,6 +301,10 @@ The three sections below are included **only** when the invocation carries `full
 *(If none: "None found.")*
 
 ---
+
+#### Full Scope Only
+
+The two sections below are included **only** when the invocation carries `full`. In default scope, omit them entirely — no headings, no "None found" placeholders.
 
 **Gaps & Inconsistencies**
 > Missing tests, undocumented behavior, pattern divergence, or things that don't quite add up.
@@ -242,18 +338,20 @@ The three sections below are included **only** when the invocation carries `full
 
 [1–3 sentence rationale. For "Go with conditions," list what must be addressed before merge.]
 
+The recommendation follows the disposition state and does not contradict it. Every Critical and Major dispositioned → **Go**. Anything open → name what is open. An approval rides on the gate in **Review State**, so the recommendation is a summary for the author rather than a second, independent verdict.
+
 ---
 
-### Step 5: Deliver
+### Step 6: Deliver
 
 Follow the delivery rules in **Modes → Delivery** above.
 
 - `local` in the invocation, or no open PR for the target → stop here. The inline report is the deliverable.
 - Otherwise → invoke `/publish-review #N` in unattended mode. Post without confirmation.
 
-Do not re-derive or re-summarize the findings for the handoff. `/publish-review` reads the report out of conversation context (its Step 1), so the inline report above is the input it consumes.
+Do not re-derive or re-summarize the findings for the handoff. `/publish-review` reads the report out of conversation context (its Step 1), so the inline report above is the input it consumes — including the **Previously Reported** table, which is what drives thread resolution and the state gate.
 
-Close by reporting what was posted — counts by bucket and the review URL — so the outcome is visible on return.
+Close by reporting what was posted — counts by bucket, the review state (`COMMENT` or `APPROVE`) and why that state was chosen, and the review URL — so the outcome is visible on return and an approval is never a silent side effect.
 
 ## Severity Definitions
 
@@ -284,12 +382,14 @@ When delivery is in play, the GitHub review object is a second artifact — owne
 
 The review is complete when:
 
-- [ ] All changed files have been evaluated against the in-scope dimensions
+- [ ] Prior rounds have been checked; a re-review is scoped to the delta and every prior Critical and Major has exactly one disposition
+- [ ] All in-scope changed files have been evaluated against the in-scope dimensions
 - [ ] Findings are categorized by severity
 - [ ] Every finding includes location, impact, and a suggestion
-- [ ] A go/no-go recommendation is stated with reasoning
+- [ ] A go/no-go recommendation is stated with reasoning, consistent with the disposition state
 - [ ] `full` only — gaps and opportunities are documented
 - [ ] Delivery is resolved: handed off to `/publish-review`, or explicitly reported as inline-only
+- [ ] The review state was determined by the disposition gate and reported with its reason
 
 ## Notes
 
@@ -298,5 +398,8 @@ The review is complete when:
 - "Quick pass" means broad coverage at appropriate depth, not skipping dimensions. If something looks fine, say so briefly and move on.
 - If a finding needs deeper investigation, do it. The default depth is a starting point, not a ceiling.
 - Drill into any finding that warrants it before closing the report.
-- Default scope hides Minor findings; it does not license grading a Major down to Minor to shorten the report. Grade honestly, then filter.
-- Never post to GitHub from this skill directly. Delivery goes through `/publish-review` so the confirmation gate and comment-mode-only rule are enforced in one place.
+- Report everything you find at its honest severity. Severity ranks the author's work queue; it is not a filter on what gets said.
+- The approve gate is a reason not to shade a severity: a downgraded Major buys a green check. Grade the code, not the outcome.
+- Each line of code is reviewed once. A re-review that re-scans settled code produces a different slice of findings every round and gives the author no path to done — that is the failure this skill is built to avoid.
+- The author closes findings, and a closed finding stays closed. If you disagree with a decline, say so once to the user and leave the PR alone.
+- Never post to GitHub from this skill directly. Delivery goes through `/publish-review` so the state gate, the confirmation gate, and the never-request-changes rule are enforced in one place.

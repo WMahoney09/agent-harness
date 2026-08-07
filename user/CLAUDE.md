@@ -78,20 +78,27 @@ Any content I author to GitHub through Will's account posts under his identity b
 
 **Why:** Posting in Will's voice from his account reads as him talking about himself; other readers can't tell human from AI and have to guess. Making it explicit up front removes the ambiguity and prevents Will from having to follow up with disambiguating replies (e.g., "⬆️ AI, but yes…").
 
-## GitHub Reviews: Comment-Mode Only (MANDATORY)
+## GitHub Reviews: Comment-Mode, Approve on Full Disposition (MANDATORY)
 
-When publishing a PR or issue review through Will's account, use **comment-mode only**.
+When publishing a PR or issue review through Will's account, use **comment-mode** — with one exception, defined below, for a PR where every blocking finding has been dealt with.
 
 **Rules:**
 
-1. **Never approve.** No `gh pr review --approve`, no `gh api ... -f event=APPROVE`, no UI equivalent.
-2. **Never request changes.** No `gh pr review --request-changes`, no `gh api ... -f event=REQUEST_CHANGES`.
-3. **Use `--comment` (or omit the state flag) every time.** `gh pr review <N> --comment --body-file /tmp/review.md` is the canonical invocation.
-4. **Severity belongs in the body, not the review state.** Words like "blocking," "must fix," "non-blocking nit" inside the body convey priority without putting Will's name on a binding approve/reject decision.
+1. **Never request changes.** No `gh pr review --request-changes`, no `gh api ... -f event=REQUEST_CHANGES`. No exception.
+2. **Comment-mode is the default.** `gh pr review <N> --comment --body-file /tmp/review.md` is the canonical invocation. Any review carrying an open blocking finding uses it.
+3. **Approve when every Critical and Major finding on the PR carries a disposition.** That covers findings from prior rounds and from the round being posted. Minor findings never count toward the gate. A first review that found no Critical or Major issues satisfies this on its face and approves.
+4. **Four dispositions close a finding, and they are equal.** *Fixed* by a change; *Intentional*, with the author's reasoning; *Deferred* to another PR or fix; *Declined* outright. Any of them closes the finding permanently — it does not reappear in a later review, and it does not hold up the approval. The author supplies the disposition, in a reply on the thread or in the code.
+5. **A finding with no disposition stays open and carries forward.** It appears in every subsequent review until the author responds. An author question ("what do you mean here?") is not a disposition — answer it and leave the finding open.
+6. **Never re-litigate a closed finding.** Once the author has answered, the answer stands. Disagreeing with a decline is not grounds for raising it again; raise it with Will instead.
+7. **The gate reads dispositions, not the report's mood.** Do not soften a Major to Minor or drop a finding to reach the threshold. Grade the code honestly, then let the gate fall where it falls.
+8. **Severity still belongs in the body.** The review state carries only the everything-answered signal; "blocking," "must fix," "non-blocking nit" stay in the body text where the author reads them.
+9. **Name the state and the reason when reporting back.** Say which event was used (`APPROVE` or `COMMENT`) and why, so a state-changing post is never a silent side effect. An approval that rests on declined or deferred findings names them.
 
-**Applies to:** any path that posts a review under Will's identity — `gh pr review`, `gh api .../pulls/N/reviews`, web UI through automation, etc.
+**Applies to:** any path that posts a review under Will's identity — `gh pr review`, `gh api .../pulls/N/reviews`, web UI through automation, etc. Approve may be posted unattended: a `/review #N` that clears the gate needs no confirmation.
 
-**Why:** Approve/request-changes carry organizational weight (branch protection, required reviewers, blocking merges). Will is the one who owns those decisions for his account; an agent posting a state-changing review under his name short-circuits that authority and is hard to reverse cleanly. Comment-mode reviews convey the same information without the binding side-effect.
+**Why:** Approve and request-changes both carry organizational weight — branch protection, required reviewers, blocking merges — but they are not symmetric. Request-changes blocks other people's work under Will's name, which stays his call. Approve says what the report already says and is cheaply reversible: a later review supersedes it, and stale approvals get dismissed on the next push.
+
+Gating on disposition rather than on a clean finding count is what keeps the loop finite. A reviewer that re-derives its findings every round will always find something, and an author who cannot close an item has no path to done — that combination produces endless rounds of blocking feedback on work that was ready. Handing the author four equal ways to close an item, including declining it, puts the merge decision with the engineer accountable for the code. The reviewer's job is to surface and inform.
 
 ## Bash: One Command Per Call (MANDATORY)
 
