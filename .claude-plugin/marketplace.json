@@ -1,0 +1,23 @@
+{
+  "name": "wmahoney",
+  "owner": {
+    "name": "William Mahoney",
+    "url": "https://github.com/WMahoney09"
+  },
+  "description": "Will's personal Claude Code and Cowork plugins.",
+  "plugins": [
+    {
+      "name": "agent-harness",
+      "source": "./",
+      "category": "workflow",
+      "tags": [
+        "workflow",
+        "planning",
+        "code-review",
+        "pull-request",
+        "writing",
+        "retrospective"
+      ]
+    }
+  ]
+}

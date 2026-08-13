@@ -15,6 +15,23 @@ This repository is the single source of truth for Will's Claude Code harness. It
 
 `setup.sh` performs the install (symlinks + MCP server registrations). Edit files in this repo; Claude Code sees changes immediately through the symlinks.
 
+## Two distribution paths
+
+The repo installs two ways, and both read the same directories:
+
+| Path | Mechanism | Used by |
+|---|---|---|
+| Symlinks | `setup.sh` links `skills/`, `agents/`, `hooks/`, `user/*` into `~/.claude/` | Will's primary machine |
+| Plugin | `.claude-plugin/marketplace.json` declares the repo root as the `agent-harness` plugin | Cowork, other machines |
+
+Consequences for anything added here:
+
+- A new skill or agent reaches both paths with no extra step. Directory scan is the definition.
+- A new **hook** needs registering twice: in `user/settings.json` for the symlink path, and in `hooks/hooks.json` for the plugin path. Plugin hook commands must use `${CLAUDE_PLUGIN_ROOT}`, never `~/.claude/`.
+- Skills must not assume `user/CLAUDE.md` is loaded implicitly. On the plugin path it arrives through a `SessionStart` hook, and on claude.ai it does not arrive at all. A skill with a hard dependency on a rule should restate it, as `deck-voice` does.
+- Cowork has no shell, no `git`, and no `gh`. Skills that need them still install there and simply do not apply. Do not add tool assumptions to a skill that could be written without them.
+- Run `claude plugin validate .` after touching `.claude-plugin/*`, `hooks/hooks.json`, or any frontmatter. One warning about the missing `version` is expected; it keeps the plugin tracking the commit SHA.
+
 ## Working in this repo
 
 Always edit files in this project directory, not in `~/.claude/` directly. Changes propagate via the symlinks.
@@ -29,7 +46,7 @@ Always edit files in this project directory, not in `~/.claude/` directly. Chang
 | Rename a skill | Rename the directory; update `name:` in frontmatter; update README |
 | Create an agent | Write `agents/<name>.md` with YAML frontmatter |
 | Edit an agent | Edit `agents/<name>.md` |
-| Add a hook | Write the script in `hooks/` (chmod +x), register it in `user/settings.json` |
+| Add a hook | Write the script in `hooks/` (chmod +x), register it in `user/settings.json` **and** in `hooks/hooks.json` |
 | Edit global CLAUDE.md | Edit `user/CLAUDE.md` (this is what loads in every conversation) |
 | Edit global settings | Edit `user/settings.json` |
 

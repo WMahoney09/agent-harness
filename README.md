@@ -2,6 +2,8 @@
 
 Will's Claude Code harness — a single repository for everything Claude Code reads at the user level. Skills, agents, hooks, global instructions, settings, and statusline all live here. `setup.sh` symlinks each piece into the install location Claude Code expects.
 
+The repository is also a [plugin marketplace](#plugin-distribution). The same skills, agents, and hooks install into Cowork, or into another machine's Claude Code, without the symlinks.
+
 ---
 
 ## Layout
@@ -12,9 +14,14 @@ agent-harness/
   CLAUDE.md          ← contributor guide (loaded when cwd is this repo)
   setup.sh           ← install script
 
+  .claude-plugin/
+    marketplace.json   ← marketplace manifest (repo is its own marketplace)
+    plugin.json        ← plugin manifest
+
   skills/            → ~/.claude/skills
   agents/            → ~/.claude/agents
   hooks/             → ~/.claude/hooks
+    hooks.json         ← plugin hook wiring (Claude Code reads user/settings.json instead)
   user/
     CLAUDE.md          → ~/.claude/CLAUDE.md (global instructions)
     settings.json      → ~/.claude/settings.json
@@ -23,6 +30,8 @@ agent-harness/
   retros/            ← harness decision records (not installed)
   docs/              ← repo docs (not installed)
 ```
+
+The repo root doubles as the plugin root, so `skills/`, `agents/`, and `hooks/` are read by both the symlink install and the plugin install with no duplication.
 
 ---
 
@@ -129,6 +138,7 @@ Deterministic pre/post-tool-use hooks live in `hooks/` and are wired in `user/se
 
 | Hook | When it fires | What it does |
 |---|---|---|
+| `hooks.json` | — | Plugin hook wiring. Only the plugin install reads it; the symlink install gets the same hooks from `user/settings.json`. Declares the `PreToolUse` hook below plus a `SessionStart` hook that reads `user/CLAUDE.md` into context, since Cowork does not load global instructions on its own. |
 | `block-pr-review-state.sh` | `PreToolUse` on `Bash` | Blocks `gh pr review --request-changes` and `gh api .../reviews` carrying `event=REQUEST_CHANGES`, inline or in an `--input` payload file. Request-changes is the one review state that is never posted under Will's account. Approve is deliberately *not* blocked here — its gate is a reading of the review report (every Critical and Major dispositioned) that only the `review` / `publish-review` skills can evaluate. |
 
 ---
@@ -148,6 +158,43 @@ Not every retro produces an entry here. Project-specific findings get applied in
 ```
 
 Idempotent. Creates symlinks from the expected Claude Code locations (`~/.claude/*`, `~/.config/claude-code/statusline.sh`) into this repo. Backs up existing files. Registers MCP servers (context7, render, vercel, figma) with the `claude` CLI.
+
+This is the install for Will's primary machine. Everywhere else, use the plugin.
+
+---
+
+## Plugin Distribution
+
+The repo is a plugin marketplace named `wmahoney` carrying one plugin, `agent-harness`. The plugin's source is the repo root, so it ships every skill in `skills/`, every agent in `agents/`, and the hooks in `hooks/hooks.json`.
+
+### Cowork
+
+**Customize → Plugins → Add marketplace**, enter `WMahoney09/agent-harness`, then install **Agent Harness**. Individual skills and agents can be toggled off from the plugin's page.
+
+### Claude Code (another machine)
+
+```sh
+claude plugin marketplace add WMahoney09/agent-harness
+claude plugin install agent-harness@wmahoney
+```
+
+Do not install the plugin on a machine that ran `setup.sh` — skills, agents, and hooks would load twice, once through the symlinks and once through the plugin cache.
+
+### Versioning
+
+`plugin.json` deliberately omits `version`. The plugin's version resolves to the commit SHA instead, so a push to `main` reaches every install on the next update — no manual version bump. Adding a `version` field would pin installs until it is bumped.
+
+### Global instructions
+
+`user/CLAUDE.md` loads automatically only in Claude Code, through the `~/.claude/CLAUDE.md` symlink. Cowork has no equivalent, so the plugin's `SessionStart` hook reads the file into context at the start of each session. Skills that lean on those rules — the prose voice, the `🤖 Claude:` prefix, the review-approval gate — behave the same on both surfaces as a result.
+
+### Validation
+
+```sh
+claude plugin validate .
+```
+
+Reports one warning about the missing `version`, which is intentional. Any other warning is a real problem.
 
 ---
 
