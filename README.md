@@ -83,6 +83,7 @@ Tools for exploring problems and building clarity. Primarily for human-paired wo
 - **`/clarify`** — Ask clarifying questions to sharpen understanding.
 - **`/reasoning`** — Extract truths, conditionals, and a directional vector from complex problems.
 - **`/terse`** — Respond in terse bullet form; bare `/terse` resynthesizes the previous response for quick scanning.
+- **`/elif`** — Explain Like I'm Five: plain-vocabulary explanation pitched at a capable reader outside their domain, with every fact and identifier intact; bare `/elif` re-explains the previous response.
 
 ### Author
 
