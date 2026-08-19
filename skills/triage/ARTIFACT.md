@@ -9,9 +9,14 @@
 ```markdown
 # Triage Report
 
-**Source:** <PR #N / Review output / Conversational list / Combined>
+**Source:** <PR #N / Review output / Conversational list / Stakeholder feedback / Combined>
 **Items ingested:** <total count>
 **Revisions identified:** <count after grouping>
+
+<!-- Stakeholder feedback only -->
+**Reviewer:** <name> *(self-declared)*
+**Document:** <docId> at revision <rev>
+**Anchors:** <N> exact · <N> relocated · <N> orphaned
 
 ---
 
@@ -62,4 +67,5 @@
 ## Notes
 
 - The triage report format mirrors the structure defined in `triage/SKILL.md`
+- A stakeholder submission that fails validation uses the Malformed Feedback Report in `triage/SKILL.md` instead of this template, and produces no revisions
 - Revision IDs (C1, M1, m1) are stable identifiers used by `/revise` in commit trailers for traceability

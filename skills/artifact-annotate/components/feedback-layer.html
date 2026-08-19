@@ -1,0 +1,844 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     FEEDBACK LAYER — gnar.artifact-feedback/1
+     Fixed component. Paste verbatim near the end of the artifact body,
+     after the theme control and the view router. Fill in
+     #feedback-config and nothing else.
+
+     Do not restyle it to match the page. It is a utility, not part of
+     the design — it stays visually neutral on purpose so a reviewer can
+     tell the deliverable from the tooling.
+
+     Requires data-cid on every commentable block. See components/README.md.
+     ══════════════════════════════════════════════════════════════ -->
+
+<script type="application/json" id="feedback-config">
+{
+  "docId": "REPLACE-doc-slug",
+  "title": "REPLACE Document Title",
+  "revision": "REPLACE-ISO-8601",
+  "to": "REPLACE@gnar.dog",
+  "cc": [],
+  "endpoint": null
+}
+</script>
+
+<!-- Present only on a republished revision that answers prior feedback.
+     Omit the whole block on a first publish. -->
+<!--
+<script type="application/json" id="feedback-responses">
+[ { "commentId": "c1", "cid": "milestones-3", "reviewer": "Dana Ruiz",
+    "disposition": "fixed", "note": "Cutover moved to a Tuesday window." } ]
+</script>
+-->
+
+<style>
+  :root {
+    --fbk-fg: #1a1a1a;
+    --fbk-dim: #6d6d6d;
+    --fbk-bg: #ffffff;
+    --fbk-bg2: #f4f4f5;
+    --fbk-bd: rgba(0, 0, 0, 0.14);
+    --fbk-accent: #2f5fd0;
+    --fbk-block: #b4291f;
+    --fbk-sugg: #6a5a1f;
+    --fbk-ques: #1f5a5a;
+    --fbk-shadow: rgba(0, 0, 0, 0.16);
+    --fbk-pin: #0F7C77;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fbk-fg: #ededed;
+      --fbk-dim: #9a9a9a;
+      --fbk-bg: #171717;
+      --fbk-bg2: #232323;
+      --fbk-bd: rgba(255, 255, 255, 0.16);
+      --fbk-accent: #7ea2f0;
+      --fbk-block: #ea8078;
+      --fbk-sugg: #cfb85e;
+      --fbk-ques: #6fbdbd;
+      --fbk-shadow: rgba(0, 0, 0, 0.5);
+      --fbk-pin: #5CCFC6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fbk-fg: #ededed;
+    --fbk-dim: #9a9a9a;
+    --fbk-bg: #171717;
+    --fbk-bg2: #232323;
+    --fbk-bd: rgba(255, 255, 255, 0.16);
+    --fbk-accent: #7ea2f0;
+    --fbk-block: #ea8078;
+    --fbk-sugg: #cfb85e;
+    --fbk-ques: #6fbdbd;
+    --fbk-shadow: rgba(0, 0, 0, 0.5);
+    --fbk-pin: #5CCFC6;
+  }
+
+  .fbk-root, .fbk-root * { box-sizing: border-box; }
+  /* Any author `display` rule beats the UA's [hidden]{display:none}, and this
+     component sets display on buttons, fields, and rows. Without this the
+     hidden Submit option and the name field both show. */
+  .fbk-root [hidden] { display: none !important; }
+  .fbk-root {
+    font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--fbk-fg);
+  }
+  .fbk-btn {
+    all: unset;
+    display: inline-block;
+    padding: 6px 11px;
+    border: 1px solid var(--fbk-bd);
+    border-radius: 6px;
+    background: var(--fbk-bg2);
+    font: inherit;
+    color: var(--fbk-fg);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .fbk-btn:hover { border-color: var(--fbk-accent); }
+  .fbk-btn:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
+  .fbk-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+  .fbk-btn--primary { background: var(--fbk-accent); border-color: var(--fbk-accent); color: #fff; }
+
+  /* ── control bar ───────────────────────────────────────────── */
+  .fbk-bar {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--fbk-bd);
+    border-radius: 10px;
+    background: var(--fbk-bg);
+    box-shadow: 0 4px 18px var(--fbk-shadow);
+    transition: right 180ms ease;
+  }
+  .fbk-panel-open .fbk-bar { right: 374px; }
+  .fbk-count {
+    all: unset;
+    padding: 3px 7px;
+    border-radius: 5px;
+    color: var(--fbk-dim);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+  }
+  .fbk-count:hover { color: var(--fbk-fg); background: var(--fbk-bg2); }
+  .fbk-count:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
+  .fbk-bar [aria-pressed="true"] { background: var(--fbk-accent); border-color: var(--fbk-accent); color: #fff; }
+
+  /* ── block affordances ─────────────────────────────────────── */
+  [data-cid] { position: relative; }
+  .fbk-on [data-cid] {
+    outline: 1px dashed transparent;
+    outline-offset: 5px;
+    transition: outline-color 120ms ease;
+    cursor: pointer;
+  }
+  .fbk-on [data-cid]:hover { outline-color: var(--fbk-accent); }
+
+  /* The anchored block stays lit while its comments are open, in or out of
+     review mode — a comment with no visible subject is hard to act on. */
+  [data-cid].fbk-active {
+    outline: 2px solid var(--fbk-accent);
+    outline-offset: 4px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--fbk-accent) 9%, transparent);
+  }
+  @keyframes fbk-flash {
+    from { background: color-mix(in srgb, var(--fbk-accent) 28%, transparent); }
+  }
+  [data-cid].fbk-flash { animation: fbk-flash 900ms ease-out; }
+  @media (prefers-reduced-motion: reduce) { [data-cid].fbk-flash { animation: none; } }
+
+  /* Speech-bubble marker: a circle with one squared corner, pointing back
+     at the block it belongs to. */
+  .fbk-pin {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border: 2px solid var(--fbk-pin);
+    border-radius: 999px 999px 999px 5px;
+    background: var(--fbk-bg);
+    box-shadow: 0 2px 8px var(--fbk-shadow);
+    font: 700 13px/1 ui-sans-serif, system-ui, sans-serif;
+    color: var(--fbk-pin);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    transition: transform 120ms ease, background-color 120ms ease;
+  }
+  .fbk-pin:hover { transform: scale(1.08); background: var(--fbk-bg2); }
+  .fbk-pin:focus-visible { outline: 2px solid var(--fbk-pin); outline-offset: 2px; }
+  /* A response marker carries no new comment of the reader's, so it stays
+     quiet — same shape, borrowed border, muted number. */
+  .fbk-pin--resp { border-color: var(--fbk-bd); color: var(--fbk-dim); }
+
+  /* ── margin panel ──────────────────────────────────────────── */
+  .fbk-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    width: 360px;
+    max-width: 100vw;
+    border-left: 1px solid var(--fbk-bd);
+    background: var(--fbk-bg);
+    box-shadow: -8px 0 28px var(--fbk-shadow);
+    transform: translateX(100%);
+    transition: transform 180ms ease;
+  }
+  .fbk-panel.fbk-open { transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .fbk-panel, .fbk-bar { transition: none; }
+  }
+
+  .fbk-phead {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 14px 14px 12px 16px;
+    border-bottom: 1px solid var(--fbk-bd);
+  }
+  .fbk-phead h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .fbk-pcount {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--fbk-bg2);
+    color: var(--fbk-dim);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fbk-x { all: unset; margin-left: auto; padding: 2px 6px; border-radius: 5px; color: var(--fbk-dim); cursor: pointer; font-size: 15px; line-height: 1; }
+  .fbk-x:hover { color: var(--fbk-fg); background: var(--fbk-bg2); }
+  .fbk-x:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
+
+  .fbk-plist { flex: 1 1 auto; overflow-y: auto; padding: 12px 14px; }
+  .fbk-hint { margin: 0; padding: 22px 4px; color: var(--fbk-dim); text-align: center; }
+
+  .fbk-group { margin-bottom: 16px; }
+  .fbk-group:last-child { margin-bottom: 0; }
+  .fbk-group h4 {
+    margin: 0 0 6px;
+    font: 600 10px/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .fbk-kind--blocking { color: var(--fbk-block); }
+  .fbk-kind--suggestion { color: var(--fbk-sugg); }
+  .fbk-kind--question { color: var(--fbk-ques); }
+
+  .fbk-card {
+    margin-bottom: 6px;
+    padding: 10px 11px;
+    border: 1px solid var(--fbk-bd);
+    border-radius: 8px;
+    background: var(--fbk-bg2);
+    cursor: pointer;
+  }
+  .fbk-card:hover { border-color: var(--fbk-accent); }
+  .fbk-card.fbk-cur { border-color: var(--fbk-accent); box-shadow: inset 0 0 0 1px var(--fbk-accent); }
+  .fbk-card h5 { margin: 0 0 3px; font-size: 12px; font-weight: 600; }
+  .fbk-card .fbk-quote {
+    margin: 0 0 6px;
+    padding-left: 8px;
+    border-left: 2px solid var(--fbk-bd);
+    color: var(--fbk-dim);
+    font-size: 11.5px;
+  }
+  .fbk-card p { margin: 0; white-space: pre-wrap; }
+  .fbk-cfoot { display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 11px; color: var(--fbk-dim); }
+  .fbk-del { all: unset; margin-left: auto; color: var(--fbk-dim); cursor: pointer; font-size: 11px; }
+  .fbk-del:hover { color: var(--fbk-block); }
+
+  .fbk-resp { padding: 7px 9px; border-radius: 6px; background: var(--fbk-bg); font-size: 12px; }
+  .fbk-resp b { text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px; }
+
+  /* ── compose ───────────────────────────────────────────────── */
+  .fbk-compose { flex: none; padding: 12px 14px; border-top: 1px solid var(--fbk-bd); }
+  .fbk-ctx { margin: 0 0 8px; font-size: 11.5px; color: var(--fbk-dim); }
+  .fbk-ctx b { color: var(--fbk-fg); font-weight: 600; }
+  .fbk-field { display: block; width: 100%; margin-bottom: 8px; padding: 7px 9px; border: 1px solid var(--fbk-bd); border-radius: 6px; background: var(--fbk-bg2); color: var(--fbk-fg); font: inherit; }
+  textarea.fbk-field { min-height: 68px; resize: vertical; }
+  .fbk-kinds { display: flex; gap: 5px; margin-bottom: 8px; }
+  .fbk-kinds .fbk-btn { flex: 1; text-align: center; padding: 5px 0; font-size: 11px; }
+  /* Selected state carries the kind's own colour, so the choice reads as the
+     same thing the comment will be labelled. Attribute selector outranks the
+     :hover border rule above. */
+  .fbk-kinds .fbk-btn[aria-pressed="true"] {
+    border-color: currentColor;
+    box-shadow: inset 0 0 0 1px currentColor;
+    font-weight: 600;
+  }
+  .fbk-kinds .fbk-btn[data-kind="blocking"][aria-pressed="true"] {
+    color: var(--fbk-block);
+    background: color-mix(in srgb, var(--fbk-block) 14%, var(--fbk-bg2));
+  }
+  .fbk-kinds .fbk-btn[data-kind="suggestion"][aria-pressed="true"] {
+    color: var(--fbk-sugg);
+    background: color-mix(in srgb, var(--fbk-sugg) 14%, var(--fbk-bg2));
+  }
+  .fbk-kinds .fbk-btn[data-kind="question"][aria-pressed="true"] {
+    color: var(--fbk-ques);
+    background: color-mix(in srgb, var(--fbk-ques) 14%, var(--fbk-bg2));
+  }
+
+  .fbk-pfoot { flex: none; display: flex; gap: 6px; padding: 12px 14px; border-top: 1px solid var(--fbk-bd); }
+
+  /* ── export sheet ──────────────────────────────────────────── */
+  .fbk-scrim { position: fixed; inset: 0; z-index: 80; display: none; place-items: center; background: rgba(0,0,0,0.45); padding: 20px; }
+  .fbk-scrim.fbk-open { display: grid; }
+  .fbk-sheet { width: 100%; max-width: 420px; padding: 20px; border: 1px solid var(--fbk-bd); border-radius: 12px; background: var(--fbk-bg); box-shadow: 0 12px 40px var(--fbk-shadow); }
+  .fbk-sheet h3 { margin: 0 0 4px; font-size: 15px; }
+  .fbk-sheet p { margin: 0 0 14px; color: var(--fbk-dim); }
+  .fbk-opts { display: grid; gap: 7px; }
+  /* Block, not flex: the label and its description stack. As flex items they
+     sat on one line and the description ran past the button's edge. */
+  .fbk-opt { display: block; width: 100%; padding: 10px 12px; text-align: left; white-space: normal; }
+  .fbk-opt b { display: block; font-weight: 600; }
+  .fbk-opt small { display: block; margin-top: 2px; color: var(--fbk-dim); font-size: 11.5px; line-height: 1.4; }
+  .fbk-status { min-height: 17px; margin: 12px 0 0; font-size: 12px; color: var(--fbk-accent); }
+
+  .fbk-warn { position: fixed; left: 14px; bottom: 14px; z-index: 60; max-width: 330px; padding: 9px 12px; border: 1px solid var(--fbk-block); border-radius: 8px; background: var(--fbk-bg); color: var(--fbk-block); font-size: 12px; }
+
+  @media (max-width: 720px) {
+    .fbk-panel { width: 100vw; border-left: 0; }
+    .fbk-panel-open .fbk-bar { display: none; }
+  }
+  @media print { .fbk-root, .fbk-pin { display: none !important; } }
+</style>
+
+<div class="fbk-root">
+  <div class="fbk-bar">
+    <button class="fbk-btn" id="fbk-mode" aria-pressed="false">Review</button>
+    <button class="fbk-count" id="fbk-count" hidden aria-expanded="false"></button>
+    <button class="fbk-btn fbk-btn--primary" id="fbk-send" hidden>Send feedback</button>
+  </div>
+
+  <aside class="fbk-panel" id="fbk-panel" aria-label="Comments">
+    <div class="fbk-phead">
+      <h3>Comments</h3>
+      <span class="fbk-pcount" id="fbk-pcount">0</span>
+      <button class="fbk-x" id="fbk-panel-close" aria-label="Close comments">&#10005;</button>
+    </div>
+
+    <div class="fbk-plist" id="fbk-plist"></div>
+
+    <div class="fbk-compose">
+      <p class="fbk-ctx" id="fbk-ctx">Click any part of the document to comment on it.</p>
+      <input class="fbk-field" id="fbk-name" placeholder="Your name" autocomplete="name" hidden>
+      <div class="fbk-kinds" role="group" aria-label="Comment type">
+        <button class="fbk-btn" data-kind="blocking" aria-pressed="false">Blocking</button>
+        <button class="fbk-btn" data-kind="suggestion" aria-pressed="true">Suggestion</button>
+        <button class="fbk-btn" data-kind="question" aria-pressed="false">Question</button>
+      </div>
+      <textarea class="fbk-field" id="fbk-body" placeholder="What should change, and why?" disabled></textarea>
+      <button class="fbk-btn fbk-btn--primary" id="fbk-add" disabled>Add comment</button>
+    </div>
+
+    <div class="fbk-pfoot">
+      <button class="fbk-btn fbk-btn--primary" id="fbk-panel-send">Send feedback</button>
+    </div>
+  </aside>
+
+  <div class="fbk-scrim" id="fbk-scrim">
+    <div class="fbk-sheet" role="dialog" aria-modal="true" aria-labelledby="fbk-sheet-h">
+      <h3 id="fbk-sheet-h">Send your feedback</h3>
+      <p id="fbk-sheet-sub"></p>
+      <div class="fbk-opts" id="fbk-opts">
+        <button class="fbk-btn fbk-opt" id="fbk-x-submit" hidden><b>Submit</b><small>Sends directly. Nothing else to do.</small></button>
+        <button class="fbk-btn fbk-opt" id="fbk-x-mail"><b>Email it</b><small id="fbk-mail-note">Opens your mail client with everything filled in. Send it as-is.</small></button>
+        <button class="fbk-btn fbk-opt" id="fbk-x-copy"><b>Copy to clipboard</b><small>Paste into Slack, email, or anywhere else.</small></button>
+        <button class="fbk-btn fbk-opt" id="fbk-x-file"><b>Download a file</b><small>Send the .json file back however you like.</small></button>
+      </div>
+      <p class="fbk-status" id="fbk-status"></p>
+      <div style="margin-top:14px"><button class="fbk-btn" id="fbk-x-close">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MAILTO_MAX = 1900; // OS handoff to the mail client truncates past ~2048.
+  var KINDS = ['blocking', 'suggestion', 'question'];
+
+  function readJSON(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  }
+
+  var CFG = readJSON('feedback-config') || {};
+  var RESPONSES = readJSON('feedback-responses') || [];
+  var KEY = 'gnar-feedback:' + (CFG.docId || 'untitled');
+
+  var storageOK = true;
+  var state = { reviewer: { name: '', org: '', verified: false }, comments: [], dirty: false };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch (e) { storageOK = false; }
+
+  function persist() {
+    if (!storageOK) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { storageOK = false; showStorageWarning(); }
+  }
+
+  function showStorageWarning() {
+    if (document.getElementById('fbk-warn')) return;
+    var w = document.createElement('div');
+    w.id = 'fbk-warn';
+    w.className = 'fbk-warn fbk-root';
+    w.textContent = 'This browser is not saving your comments. Send your feedback before closing the page.';
+    document.body.appendChild(w);
+  }
+  if (!storageOK) showStorageWarning();
+
+  var seq = state.comments.reduce(function (n, c) {
+    var m = /^c(\d+)$/.exec(c.id);
+    return m ? Math.max(n, +m[1]) : n;
+  }, 0);
+  function nextId() { seq += 1; return 'c' + seq; }
+
+  // ── element lookups ─────────────────────────────────────────
+  var $ = function (id) { return document.getElementById(id); };
+  var bar = { mode: $('fbk-mode'), count: $('fbk-count'), send: $('fbk-send') };
+  var panel = $('fbk-panel');
+  var scrim = $('fbk-scrim');
+  var active = null;
+  var kind = 'suggestion';
+
+  // ── anchors ─────────────────────────────────────────────────
+  function headingFor(el) {
+    if (el.dataset.fbkHeading) return el.dataset.fbkHeading;
+    var node = el;
+    while (node && node !== document.body) {
+      var sib = node.previousElementSibling;
+      while (sib) {
+        if (/^H[1-6]$/.test(sib.tagName)) return sib.textContent.trim();
+        var nested = sib.querySelector('h1,h2,h3,h4,h5,h6');
+        if (nested) return nested.textContent.trim();
+        sib = sib.previousElementSibling;
+      }
+      node = node.parentElement;
+    }
+    return (CFG.title || 'Document');
+  }
+
+  function quoteFor(el) {
+    var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return t.length > 120 ? t.slice(0, 120).replace(/\s\S*$/, '') + '…' : t;
+  }
+
+  function blocks() { return Array.prototype.slice.call(document.querySelectorAll('[data-cid]')); }
+  function forCid(cid) { return state.comments.filter(function (c) { return c.cid === cid; }); }
+  function respFor(cid) { return RESPONSES.filter(function (r) { return r.cid === cid; }); }
+
+  // ── panel ───────────────────────────────────────────────────
+  function panelOpen() { return panel.classList.contains('fbk-open'); }
+
+  function showPanel(on) {
+    panel.classList.toggle('fbk-open', on);
+    document.body.classList.toggle('fbk-panel-open', on);
+    bar.count.setAttribute('aria-expanded', String(on));
+    if (on) renderList();
+  }
+
+  function renderPins() {
+    document.querySelectorAll('.fbk-pin').forEach(function (p) { p.remove(); });
+    blocks().forEach(function (b) {
+      var mine = forCid(b.dataset.cid).length;
+      var theirs = respFor(b.dataset.cid).length;
+      if (!mine && !theirs) return;
+      var pin = document.createElement('button');
+      pin.className = 'fbk-pin' + (mine ? '' : ' fbk-pin--resp');
+      pin.type = 'button';
+      pin.textContent = mine || theirs;
+      pin.setAttribute('aria-label', mine ? mine + ' comment(s) on this section' : 'Response to earlier feedback');
+      pin.addEventListener('click', function (e) { e.stopPropagation(); select(b); });
+      b.appendChild(pin);
+    });
+  }
+
+  function renderBar() {
+    var n = state.comments.length;
+    bar.count.hidden = !n;
+    bar.count.textContent = n + (n === 1 ? ' comment' : ' comments');
+    bar.send.hidden = !n;
+    $('fbk-pcount').textContent = n;
+    $('fbk-panel-send').disabled = !n;
+  }
+
+  function card(c) {
+    var el = document.createElement('div');
+    el.className = 'fbk-card' + (active && active.dataset.cid === c.cid ? ' fbk-cur' : '');
+    el.id = 'fbk-card-' + c.id;
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+
+    var h = document.createElement('h5');
+    h.textContent = c.heading;
+    el.appendChild(h);
+
+    if (c.quote) {
+      var q = document.createElement('p');
+      q.className = 'fbk-quote';
+      q.textContent = c.quote;
+      el.appendChild(q);
+    }
+
+    var p = document.createElement('p');
+    p.textContent = c.body;
+    el.appendChild(p);
+
+    var foot = document.createElement('div');
+    foot.className = 'fbk-cfoot';
+    foot.appendChild(document.createTextNode(state.reviewer.name || 'You'));
+    var del = document.createElement('button');
+    del.className = 'fbk-del';
+    del.type = 'button';
+    del.textContent = 'Remove';
+    del.addEventListener('click', function (e) {
+      e.stopPropagation();
+      state.comments = state.comments.filter(function (x) { return x.id !== c.id; });
+      state.dirty = true;
+      persist(); renderPins(); renderBar(); renderList();
+    });
+    foot.appendChild(del);
+    el.appendChild(foot);
+
+    function go() { goTo(c); }
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+    });
+    return el;
+  }
+
+  function responseCard(r) {
+    var el = document.createElement('div');
+    el.className = 'fbk-card';
+    var h = document.createElement('h5');
+    h.textContent = 'Earlier feedback' + (r.reviewer ? ' — ' + r.reviewer : '');
+    el.appendChild(h);
+    var box = document.createElement('div');
+    box.className = 'fbk-resp';
+    var b = document.createElement('b');
+    b.textContent = r.disposition;
+    box.appendChild(b);
+    if (r.note) box.appendChild(document.createTextNode(' — ' + r.note));
+    el.appendChild(box);
+    return el;
+  }
+
+  function renderList() {
+    var host = $('fbk-plist');
+    host.textContent = '';
+
+    if (RESPONSES.length) {
+      var rg = document.createElement('div');
+      rg.className = 'fbk-group';
+      var rh = document.createElement('h4');
+      rh.textContent = 'answered · ' + RESPONSES.length;
+      rg.appendChild(rh);
+      RESPONSES.forEach(function (r) { rg.appendChild(responseCard(r)); });
+      host.appendChild(rg);
+    }
+
+    if (!state.comments.length) {
+      var hint = document.createElement('p');
+      hint.className = 'fbk-hint';
+      hint.textContent = 'No comments yet. Turn on Review, then click any part of the document.';
+      host.appendChild(hint);
+      return;
+    }
+
+    KINDS.forEach(function (k) {
+      var items = state.comments.filter(function (c) { return c.kind === k; });
+      if (!items.length) return;
+      var group = document.createElement('div');
+      group.className = 'fbk-group';
+      var h = document.createElement('h4');
+      h.className = 'fbk-kind--' + k;
+      h.textContent = k + ' · ' + items.length;
+      group.appendChild(h);
+      items.forEach(function (c) { group.appendChild(card(c)); });
+      host.appendChild(group);
+    });
+  }
+
+  // ── selection ───────────────────────────────────────────────
+  function select(block) {
+    if (active) active.classList.remove('fbk-active');
+    active = block;
+    active.classList.add('fbk-active');
+    showPanel(true);
+
+    var ctx = $('fbk-ctx');
+    ctx.textContent = '';
+    ctx.appendChild(document.createTextNode('Commenting on '));
+    var b = document.createElement('b');
+    b.textContent = headingFor(block);
+    ctx.appendChild(b);
+
+    $('fbk-body').disabled = false;
+    $('fbk-add').disabled = false;
+    $('fbk-name').hidden = !!state.reviewer.name;
+    renderList();
+
+    var first = forCid(block.dataset.cid)[0];
+    if (first) {
+      var el = $('fbk-card-' + first.id);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+    $('fbk-body').focus();
+  }
+
+  function deselect() {
+    if (active) active.classList.remove('fbk-active');
+    active = null;
+    $('fbk-ctx').textContent = 'Click any part of the document to comment on it.';
+    $('fbk-body').disabled = true;
+    $('fbk-add').disabled = true;
+    renderList();
+  }
+
+  // Jump to the block a comment is anchored to, opening its view first when
+  // the deliverable is routed, and light it up on arrival.
+  function goTo(c) {
+    var el = document.querySelector('[data-cid="' + c.cid + '"]');
+    if (!el) return;
+    var view = el.closest('[data-view]');
+    if (view && view.id && location.hash.slice(1) !== view.id) location.hash = view.id;
+
+    setTimeout(function () {
+      select(el);
+      el.scrollIntoView({ block: 'center' });
+      el.classList.remove('fbk-flash');
+      void el.offsetWidth;
+      el.classList.add('fbk-flash');
+      setTimeout(function () { el.classList.remove('fbk-flash'); }, 950);
+    }, 0);
+  }
+
+  // ── review mode ─────────────────────────────────────────────
+  function setMode(on) {
+    document.body.classList.toggle('fbk-on', on);
+    bar.mode.setAttribute('aria-pressed', String(on));
+    bar.mode.textContent = on ? 'Reviewing' : 'Review';
+    if (on) showPanel(true);
+    else deselect();
+  }
+
+  bar.mode.addEventListener('click', function () {
+    setMode(bar.mode.getAttribute('aria-pressed') !== 'true');
+  });
+
+  bar.count.addEventListener('click', function () { showPanel(!panelOpen()); });
+  $('fbk-panel-close').addEventListener('click', function () { showPanel(false); });
+
+  document.addEventListener('click', function (e) {
+    if (!document.body.classList.contains('fbk-on')) return;
+    if (e.target.closest('.fbk-root')) return;
+    var b = e.target.closest('[data-cid]');
+    if (b) select(b);
+  });
+
+  document.querySelectorAll('.fbk-kinds .fbk-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      kind = b.dataset.kind;
+      document.querySelectorAll('.fbk-kinds .fbk-btn').forEach(function (x) {
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+    });
+  });
+
+  $('fbk-add').addEventListener('click', function () {
+    var text = $('fbk-body').value.trim();
+    if (!text || !active) return;
+    var name = $('fbk-name').value.trim();
+    if (name) state.reviewer.name = name;
+    state.comments.push({
+      id: nextId(),
+      cid: active.dataset.cid,
+      heading: headingFor(active),
+      quote: quoteFor(active),
+      body: text,
+      kind: kind,
+      createdAt: new Date().toISOString()
+    });
+    state.dirty = true;
+    $('fbk-body').value = '';
+    $('fbk-name').hidden = !!state.reviewer.name;
+    persist(); renderPins(); renderBar(); renderList();
+  });
+
+  // ── export builders ─────────────────────────────────────────
+  function record(transport) {
+    return {
+      schema: 'gnar.artifact-feedback/1',
+      document: {
+        docId: CFG.docId, title: CFG.title, revision: CFG.revision,
+        artifactUrl: location.protocol === 'file:' ? undefined : location.href
+      },
+      reviewer: { name: state.reviewer.name || 'Unnamed reviewer', verified: false },
+      transport: transport,
+      exportedAt: new Date().toISOString(),
+      comments: state.comments
+    };
+  }
+
+  function markdown() {
+    var r = record('clipboard');
+    var out = [
+      'Feedback — ' + (CFG.title || ''),
+      'doc: ' + CFG.docId + ' · rev: ' + CFG.revision,
+      'reviewer: ' + r.reviewer.name,
+      'comments: ' + state.comments.length,
+      'schema: gnar.artifact-feedback/1',
+      ''
+    ];
+    state.comments.forEach(function (c) {
+      out.push('[' + c.kind + '] ' + c.heading + '  (cid: ' + c.cid + ')');
+      if (c.quote) out.push('> ' + c.quote);
+      out.push(c.body, '');
+    });
+    return out.join('\n').trim() + '\n';
+  }
+
+  function slug(s) {
+    return String(s || 'reviewer').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function subject() {
+    return 'Feedback: ' + CFG.docId + ' ' + CFG.revision + ' — ' + (state.reviewer.name || 'Unnamed reviewer');
+  }
+
+  function mailtoURL() {
+    var q = 'subject=' + encodeURIComponent(subject()) + '&body=' + encodeURIComponent(markdown());
+    if (CFG.cc && CFG.cc.length) q += '&cc=' + encodeURIComponent(CFG.cc.join(','));
+    return 'mailto:' + encodeURIComponent(CFG.to || '') + '?' + q;
+  }
+
+  function done(msg) {
+    $('fbk-status').textContent = msg;
+    state.dirty = false;
+    persist();
+  }
+
+  // ── export actions ──────────────────────────────────────────
+  function openExport() {
+    if (!state.comments.length) return;
+    if (!state.reviewer.name) {
+      showPanel(true);
+      $('fbk-name').hidden = false;
+      $('fbk-name').focus();
+      return;
+    }
+    $('fbk-status').textContent = '';
+    $('fbk-sheet-sub').textContent = state.comments.length +
+      ' comment' + (state.comments.length === 1 ? '' : 's') + ' on ' + (CFG.title || 'this document') + '.';
+    $('fbk-x-submit').hidden = !CFG.endpoint;
+
+    var url = mailtoURL();
+    var tooLong = url.length > MAILTO_MAX;
+    $('fbk-x-mail').disabled = tooLong;
+    $('fbk-mail-note').textContent = tooLong
+      ? 'Too long to email directly — mail clients truncate it. Copy or download instead.'
+      : 'Opens your mail client with everything filled in. Send it as-is.';
+
+    scrim.classList.add('fbk-open');
+  }
+
+  bar.send.addEventListener('click', openExport);
+  $('fbk-panel-send').addEventListener('click', openExport);
+
+  $('fbk-x-close').addEventListener('click', function () { scrim.classList.remove('fbk-open'); });
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) scrim.classList.remove('fbk-open'); });
+
+  $('fbk-x-copy').addEventListener('click', function () {
+    var text = markdown();
+    var ok = function () { done('Copied. Paste it into Slack or an email and send it.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); ok(); }
+      catch (e) { $('fbk-status').textContent = 'Copy failed — use Download instead.'; }
+      ta.remove();
+    }
+  });
+
+  $('fbk-x-file').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(record('download'), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'feedback--' + CFG.docId + '--' + slug(state.reviewer.name) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    done('Downloaded. Send the file back however you like.');
+  });
+
+  $('fbk-x-mail').addEventListener('click', function () {
+    location.href = mailtoURL();
+    done('Your mail client should be open. Send it as-is — no editing needed.');
+  });
+
+  $('fbk-x-submit').addEventListener('click', function () {
+    var btn = $('fbk-x-submit');
+    btn.disabled = true;
+    $('fbk-status').textContent = 'Sending…';
+    fetch(CFG.endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(record('api'))
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      done('Sent. Thank you.');
+    }).catch(function () {
+      $('fbk-status').textContent = 'Could not send. Use Copy or Download instead.';
+    }).then(function () { btn.disabled = false; });
+  });
+
+  addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (scrim.classList.contains('fbk-open')) { scrim.classList.remove('fbk-open'); return; }
+    if (active) { deselect(); return; }
+    if (panelOpen()) showPanel(false);
+  });
+
+  addEventListener('beforeunload', function (e) {
+    if (!state.dirty || !state.comments.length) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  renderPins();
+  renderBar();
+  renderList();
+  if (RESPONSES.length) showPanel(true);
+})();
+</script>

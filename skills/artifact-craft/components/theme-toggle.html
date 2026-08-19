@@ -1,0 +1,141 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     THEME CONTROL — light / auto / dark
+     Paste verbatim near the end of the artifact body. Do not restyle
+     the glyphs; do not swap them for emoji.
+
+     Writes or removes data-theme on <html>, and sets color-scheme to match:
+       auto  → attribute removed, color-scheme: light dark
+       light → data-theme="light",  color-scheme: light
+       dark  → data-theme="dark",   color-scheme: dark
+
+     This composes with the three-block token structure the Artifact
+     contract already requires. It adds no selectors to the page's own
+     palette and needs no changes to it.
+     ══════════════════════════════════════════════════════════════ -->
+
+<style>
+  /* Own tokens, defined in all three states — the same rule the page
+     palette follows. Never define a thm-* value only inside a media
+     or [data-theme] block. */
+  :root {
+    /* The Artifact wrapper pins :root{color-scheme:light}. Without this
+       declaration the caret, text selection, scrollbars, and form controls
+       render light on a dark page. Set before JS runs, and again in apply(). */
+    color-scheme: light dark;
+
+    --thm-fg: #6b6b6b;
+    --thm-fg-on: #101010;
+    --thm-bg: rgba(255, 255, 255, 0.78);
+    --thm-bd: rgba(0, 0, 0, 0.13);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --thm-fg: #8c8c8c;
+      --thm-fg-on: #f4f4f4;
+      --thm-bg: rgba(22, 22, 22, 0.78);
+      --thm-bd: rgba(255, 255, 255, 0.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --thm-fg: #8c8c8c;
+    --thm-fg-on: #f4f4f4;
+    --thm-bg: rgba(22, 22, 22, 0.78);
+    --thm-bd: rgba(255, 255, 255, 0.15);
+  }
+
+  .thm {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 40;
+    display: flex;
+    gap: 1px;
+    padding: 3px;
+    border: 1px solid var(--thm-bd);
+    border-radius: 999px;
+    background: var(--thm-bg);
+    backdrop-filter: blur(8px);
+    opacity: 0.45;
+    transition: opacity 140ms ease;
+  }
+  .thm:hover,
+  .thm:focus-within { opacity: 1; }
+
+  .thm-b {
+    all: unset;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    color: var(--thm-fg);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 120ms ease, background-color 120ms ease;
+  }
+  .thm-b:hover { color: var(--thm-fg-on); }
+  .thm-b[aria-pressed="true"] {
+    color: var(--thm-fg-on);
+    background: color-mix(in srgb, var(--thm-fg) 18%, transparent);
+  }
+  .thm-b:focus-visible { outline: 2px solid var(--thm-fg-on); outline-offset: 1px; }
+
+  @media print { .thm { display: none; } }
+</style>
+
+<div class="thm" role="group" aria-label="Colour theme">
+  <button class="thm-b" data-thm="light" aria-label="Light theme" aria-pressed="false">&#9675;</button>
+  <button class="thm-b" data-thm="auto"  aria-label="Follow system theme" aria-pressed="true">&#9680;</button>
+  <button class="thm-b" data-thm="dark"  aria-label="Dark theme" aria-pressed="false">&#9679;</button>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var box = document.querySelector('.thm');
+  var KEY = 'artifact-theme';
+
+  function read() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+
+  function apply(v) {
+    var explicit = (v === 'light' || v === 'dark');
+    if (explicit) root.setAttribute('data-theme', v);
+    else root.removeAttribute('data-theme');
+    // Native UA surfaces follow color-scheme, not the token palette. Setting
+    // it here is what keeps scrollbars, carets, selection, and form controls
+    // on the same theme as the page.
+    root.style.colorScheme = explicit ? v : 'light dark';
+    box.querySelectorAll('.thm-b').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.thm === (v || 'auto')));
+    });
+  }
+
+  var current = read() || 'auto';
+  apply(current);
+
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('.thm-b');
+    if (!b) return;
+    current = b.dataset.thm;
+    save(current);
+    apply(current);
+  });
+
+  // Print always goes light. Setting the attribute excludes the dark
+  // media block and falls through to the base :root tokens, so no
+  // print-specific palette is needed.
+  var prior = null;
+  addEventListener('beforeprint', function () {
+    prior = root.getAttribute('data-theme');
+    root.setAttribute('data-theme', 'light');
+    root.style.colorScheme = 'light';
+  });
+  addEventListener('afterprint', function () {
+    if (prior) root.setAttribute('data-theme', prior);
+    else root.removeAttribute('data-theme');
+    root.style.colorScheme = prior || 'light dark';
+  });
+})();
+</script>

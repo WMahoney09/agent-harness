@@ -1,0 +1,73 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     VIEW ROUTER — multi-page experience in a single file
+     Paste verbatim near the end of the artifact body.
+
+     Any deliverable spanning several pages uses this. Relative links
+     between separate local HTML files are never used: the set has to
+     land in one folder with matching filenames to work, and Slack
+     downloads, mail-client temp directories, and Windows' browse-inside-
+     a-zip view each break that in a way the reader cannot see.
+
+     MARKUP CONTRACT
+       Each view is an element carrying data-view and a unique id.
+       Nav links are ordinary anchors to those ids. Style the nav as
+       part of the page — it is design surface, unlike this router.
+
+         <nav class="views">
+           <a href="#overview">Overview</a>
+           <a href="#typography">Typography</a>
+         </nav>
+         <main>
+           <section data-view id="overview">…</section>
+           <section data-view id="typography">…</section>
+         </main>
+
+       The router marks nav links with aria-current="page". Style that
+       attribute rather than adding a class of your own.
+
+     Deep links work: href="#type-scale" pointing at a heading INSIDE a
+     view opens that view and scrolls to the heading. The overview's
+     cross-references should use them.
+
+     Views are visible by default and hidden by script, so with JS
+     disabled the file degrades to one long document rather than to a
+     blank page. Printing does the same on purpose — the reader gets
+     the whole deliverable as a PDF from one Cmd-P.
+     ══════════════════════════════════════════════════════════════ -->
+
+<style>
+  .view--off { display: none; }
+  @media print { .view--off { display: block; } }
+  [data-view]:focus { outline: none; }
+</style>
+
+<script>
+(function () {
+  var views = Array.prototype.slice.call(document.querySelectorAll('[data-view]'));
+  if (!views.length) return;
+  var links = Array.prototype.slice.call(document.querySelectorAll('a[href^="#"]'));
+
+  function route(userInitiated) {
+    var target = location.hash.length > 1 ? document.getElementById(location.hash.slice(1)) : null;
+    var view = (target && target.closest('[data-view]')) || views[0];
+
+    views.forEach(function (v) { v.classList.toggle('view--off', v !== view); });
+    links.forEach(function (a) {
+      var t = document.getElementById(a.hash.slice(1));
+      var owner = t && t.closest('[data-view]');
+      if (owner) a.setAttribute('aria-current', owner === view ? 'page' : 'false');
+    });
+
+    if (target && target !== view) target.scrollIntoView();
+    else scrollTo(0, 0);
+
+    if (userInitiated) {
+      view.setAttribute('tabindex', '-1');
+      view.focus({ preventScroll: true });
+    }
+  }
+
+  addEventListener('hashchange', function () { route(true); });
+  route(false);
+})();
+</script>

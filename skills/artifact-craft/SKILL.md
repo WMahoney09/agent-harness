@@ -33,6 +33,10 @@ Call `artifact-design` **before writing any file** — HTML and Markdown alike. 
 
 If the page needs live data, shared state, file downloads, or self-updating, also load `artifact-capabilities` before writing. If it needs diagrams, load `artifact-diagramming`.
 
+Two fixed components live in `components/` next to this file — a theme control and a view router. They are pasted verbatim, never regenerated. Read `components/README.md` before using either.
+
+**Whether the deliverable needs commenting is decided here, in step 2.** `artifact-annotate` supplies the commenting; this skill decides that it is needed and loads it. That split matters because this skill runs on every artifact and that one does not — a determination that lived only in `artifact-annotate` would never get made on the artifacts that most need it.
+
 ### 2. Read the request and calibrate the treatment
 
 Decide, explicitly, which register the work calls for:
@@ -44,6 +48,22 @@ Decide, explicitly, which register the work calls for:
 Format is part of this decision, not a shortcut. Choose Markdown only when the user asked for it or the destination is Markdown-native — never to save time.
 
 Getting this wrong is the most expensive error available. An editorial treatment on an internal reference reads as unserious; a utilitarian treatment on a pitch reads as unfinished.
+
+**Two structural questions belong in the same breath.**
+
+*Does this deliverable span several pages?* If so it is one file with hash-routed views — see step 3. Never a set of local HTML files linking to each other.
+
+*Does this file leave our control?* **Answer this on every artifact, and answer it here.**
+
+If the reader can comment on it inside Claude, the built-in comments already handle review and nothing more is needed. If the reader is a client stakeholder, an outside contractor, or anyone who will open the file in their own browser — over Slack, over email, as a raw file — the deliverable needs commenting, and `artifact-annotate` supplies it. Load it now, before step 3, because its answer changes what gets built.
+
+The test is the audience's access, not the word "client." An internal reference for the team does not need it. A PRD going to a client's VP does.
+
+**When it is genuinely unclear, ask.** One question, before any file is written:
+
+> Who reads this — someone in our org who can comment on it in Claude, or someone outside it?
+
+Do not guess, and do not build both ways. Asking costs one turn. Guessing wrong costs either a stripped-down rebuild or a client with no way to respond. Overridable both directions on request: "make this reviewable," "skip the feedback layer."
 
 ### 3. Write the design plan before any code
 
@@ -65,6 +85,14 @@ Give every role a job. A useful default for technical subjects: monospace carrie
 
 The strongest layouts make position mean something. If the page answers "which of these is which," let an axis encode the answer. If it answers "what happens in what order," let the sequence be the structure.
 
+**A deliverable spanning several pages is one file with hash-routed views.** This is a rule, not an option. Paste `view-router.html`, mark each view with `data-view` and an id, and link between them with ordinary anchors. Deep links into a view work, so the overview can cross-reference a heading three views away.
+
+Relative links between separate local HTML files are never used. They need the whole set to land in one folder with filenames matching the hrefs, and delivery breaks that routinely — Slack downloads attachments one at a time and suffixes on collision, mail clients open them from per-file temp directories, and Windows Explorer will open a page from inside a zip, which copies that one file to a temp directory and kills every link with nothing visible to the reader.
+
+The nav is design surface and gets styled with the page; style `aria-current="page"` rather than adding a class. The router itself, and the size arithmetic for a mockup-heavy deliverable, are in `components/README.md`.
+
+**The components claim fixed screen corners** — theme control top-right, and, when `artifact-annotate` is in play, a feedback bar bottom-right with a drawer along the right edge. Leave those corners free of anything the reader needs. Do not restyle the components to match the palette: they are tooling, and staying visually neutral is what lets a reader tell the deliverable from the controls.
+
 ### 4. Build from the plan
 
 Follow the plan you wrote. If you find yourself deviating, revise the plan first and say why.
@@ -73,6 +101,14 @@ Follow the plan you wrote. If you find yourself deviating, revise the plan first
 
 - Number a list only when order carries meaning the reader needs — a real sequence, a ranked tier, a timeline.
 - Do **not** number a set of peers. A people table, a set of open questions, and a feature list are unordered; numbering them asserts a rank that doesn't exist.
+
+**Give every commentable block a `data-cid`. Every artifact, always.**
+
+A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen. The format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`.
+
+`artifact-annotate` owns the rule and the stability discipline; this skill applies it unconditionally. It costs a few tokens per block and no thought, and it is the one property that is expensive to retrofit — an artifact carrying cids can accept feedback later by any route and still resolve anchors.
+
+**Paste the components in, last, verbatim.** Theme control, then the view router if the deliverable spans views, then `artifact-annotate`'s feedback layer if step 2 called for it.
 
 **Write the copy as content, not filler.** Verdict first — the opening sentence carries the answer, support follows. Real content throughout, never lorem. Name things the way a reader recognizes them, not the way the system is built.
 
@@ -83,6 +119,12 @@ Follow the plan you wrote. If you find yourself deviating, revise the plan first
 Walk it. Every item, every time — including redeploys.
 
 **Theme.** Scan the stylesheet for any color whose only definition sits inside a media query or a `[data-theme]` block. That is the classic unreadable-artifact bug: it renders one theme's text on the other theme's ground for every viewer on the default "system" setting. `body` must set an explicit background from a token.
+
+**Theme control.** Present and working in all three states — `○` light, `◐` auto, `●` dark. Toggling to each one and back must change the page, which is the fastest way to catch a token defined in only one block.
+
+**Anchors.** Every block a reader would comment on carries `data-cid`. On a redeploy, spot-check that surviving blocks kept the ids they had, or any feedback already in hand is orphaned.
+
+**Views.** On a multi-view file: every nav link resolves, deep links open the right view and scroll, the back button works, and printing shows all views rather than one.
 
 **Overflow.** Tables, code blocks, and diagrams each scroll inside their own `overflow-x: auto` container. The page body never scrolls sideways.
 
@@ -127,6 +169,8 @@ Also banned:
 
 An `.html` file (or `.md` when the treatment read calls for it), written to the session scratchpad unless the user names a location, then published with the Artifact tool.
 
+**When `artifact-annotate` is in play the scratchpad is not enough** — the source has to be committed so feedback can resolve against the exact revision the reviewer read. That skill owns where it goes.
+
 No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output template would produce exactly the templated sameness the skill is written to prevent — the structure must come from the subject each time.
 
 ## Closure Criteria
@@ -137,6 +181,11 @@ No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output 
 - [ ] Derivation test passed: palette, type, and layout are traceable to the subject
 - [ ] Structural devices encode real information; nothing is numbered that isn't a sequence or a rank
 - [ ] Both themes verified; no color defined only inside a media or `[data-theme]` block
+- [ ] Theme control pasted in and cycles through `○ ◐ ●` correctly
+- [ ] Every commentable block carries `data-cid`; ids preserved on a redeploy
+- [ ] Multi-view deliverables use hash routing in one file; nav, deep links, back button, and print all verified
+- [ ] The leaves-our-control question was answered explicitly — asked when unclear, never guessed
+- [ ] `artifact-annotate` loaded when the answer was yes
 - [ ] Wide content scrolls in its own container; page body does not scroll sideways
 - [ ] Title is a specific two-to-four-word name; `description` and `favicon` set
 - [ ] House prose rules run over every line, headings and card copy included
@@ -152,3 +201,11 @@ No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output 
 **The most common failure is skipping step 3.** Writing CSS directly, with the plan implicit, is how pages drift toward the defaults — warm cream and a serif, or near-black with one acid accent, or a purple gradient hero. The plan takes two minutes and is the difference.
 
 **On updating an existing artifact.** Republish the same file path from the same conversation to keep the URL. From a different conversation, pass the artifact's URL as `url` — publishing without it creates a separate artifact and strands the original link. Recover the URL with `action: "list"` or by asking, never by guessing.
+
+**Why the components are fixed rather than authored per page.** A theme control that behaves differently on every deliverable is a bug surface, and a router regenerated each time will drop deep links about half the time. They are small enough to paste and stable enough to trust.
+
+**Where the boundary with `artifact-annotate` sits.** This skill owns how the page looks, reads, and navigates, and it owns the decision that a deliverable needs commenting. That one owns the commenting itself — the component, the anchor rule, the transports, the round-two responses.
+
+The decision lives here because this skill runs on every artifact and that one does not. A determination made only inside `artifact-annotate` would never be reached on an artifact where nobody thought to load it, which is exactly the artifact that ships to a client with no way to respond.
+
+They meet at two points and no others: `data-cid` on commentable blocks, and the right-hand screen corners staying free. Keeping the component here would couple two things that have never changed for the same reason.

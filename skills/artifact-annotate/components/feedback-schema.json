@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gnar.artifact-feedback/1",
+  "title": "Artifact feedback submission",
+  "description": "One reviewer's feedback on one revision of one artifact. Transport-independent: the same record travels by clipboard, file, email body, or API.",
+  "type": "object",
+  "required": ["schema", "document", "reviewer", "exportedAt", "comments"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "gnar.artifact-feedback/1" },
+
+    "document": {
+      "type": "object",
+      "required": ["docId", "title", "revision"],
+      "additionalProperties": false,
+      "properties": {
+        "docId": {
+          "type": "string",
+          "description": "Stable slug for the deliverable across revisions. Matches the source filename in ideate/artifacts/.",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "title": { "type": "string" },
+        "revision": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of the published revision this feedback was written against. Lets ingestion resolve anchors against the exact HTML that was sent rather than current HEAD."
+        },
+        "artifactUrl": { "type": "string", "description": "Optional. Present when the reviewer read a hosted copy." }
+      }
+    },
+
+    "reviewer": {
+      "type": "object",
+      "required": ["name", "verified"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "org": { "type": "string" },
+        "email": { "type": "string" },
+        "verified": {
+          "type": "boolean",
+          "description": "false for self-declared identity (clipboard, file, and email transports). true only when an authenticated platform vouched for it. Present from v1 so the hosted transport needs no schema bump."
+        }
+      }
+    },
+
+    "transport": {
+      "enum": ["clipboard", "download", "mailto", "api"],
+      "description": "How this submission came back. Recorded to judge whether a hosted platform is earning its keep."
+    },
+
+    "exportedAt": { "type": "string", "description": "ISO 8601. Part of the idempotency key." },
+
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "cid", "heading", "body", "kind", "createdAt"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Unique within this submission. Referenced by the responses layer on republish." },
+          "cid": {
+            "type": "string",
+            "description": "data-cid of the block the comment is anchored to. Tier-1 anchor."
+          },
+          "heading": {
+            "type": "string",
+            "description": "Nearest preceding heading text. Anchor of last resort — a human can always locate it from this."
+          },
+          "quote": {
+            "type": "string",
+            "description": "Leading text of the anchored block, whitespace-collapsed, ~120 chars. Tier-2 anchor when the cid has moved."
+          },
+          "body": { "type": "string" },
+          "kind": { "enum": ["blocking", "suggestion", "question"] },
+          "createdAt": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "responses": {
+      "description": "Not part of a submission. Embedded in the REPUBLISHED artifact as #feedback-responses so a reviewer sees what happened to each item they raised. Disposition vocabulary matches the review rules in user/CLAUDE.md.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["commentId", "disposition"],
+        "properties": {
+          "commentId": { "type": "string" },
+          "cid": { "type": "string" },
+          "reviewer": { "type": "string" },
+          "disposition": { "enum": ["fixed", "intentional", "deferred", "declined"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}
