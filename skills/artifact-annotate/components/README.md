@@ -15,13 +15,17 @@ A fixed, versioned block pasted into an artifact verbatim. It is a utility, not 
 
 A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen.
 
+**Never put `data-cid` on a `<table>`, `<thead>`, `<tbody>`, `<tr>`, or `<td>`.** The layer appends its marker as a child of the anchored element, and a `<button>` inside table markup renders badly. Put it on the `overflow-x: auto` wrapper the table already needs — which is also the thing a reader means when they comment on "the table."
+
 Format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`. In a multi-view file the heading slug picks up the view name on its own — `typography-scale-2` — so ids stay unique file-wide with no extra rule.
 
 It is deterministic, so a regenerated revision produces matching ids for unchanged structure with nobody tracking anything. Ids shift when a block is inserted mid-section; the quote fallback exists for that, so do not build machinery to prevent it.
 
 Emitting cids always costs a few tokens per block and no discipline, and it is the one property that is expensive to retrofit. A plain artifact carrying cids can accept feedback later by any route and still resolve anchors.
 
-`data-fbk-heading="…"` overrides the auto-detected heading on a block whose nearest heading reads wrong.
+**The heading a comment records is the block's own, when it has one.** `headingFor` takes a heading contained in the commented block first, then walks back through *sibling* headings, then up a level. Checking the block's own heading first is what stops a run of sibling cards each recording its neighbour's; counting only sibling headings on the walk is what makes a note following those cards record the section heading above them rather than the last card's.
+
+`data-fbk-heading="…"` overrides the result on a block where it still reads wrong.
 
 **Stability is shared with the content skill.** Cids derive from headings, and headings come from the ontology, PRD, or exec-summary skill that authored the content. Renaming a section moves every cid under it. Once a deliverable has been reviewed, section names are an interface.
 

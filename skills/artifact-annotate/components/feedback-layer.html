@@ -45,7 +45,7 @@
        text always use --fbk-accent-ink. */
     --fbk-accent: #D84025;
     --fbk-accent-ink: #D84025;
-    --fbk-block: #b4291f;
+    --fbk-block: var(--fbk-accent);
     --fbk-sugg: #6a5a1f;
     --fbk-ques: #1f5a5a;
     --fbk-shadow: rgba(0, 0, 0, 0.16);
@@ -69,7 +69,7 @@
       --fbk-bd: rgba(255, 255, 255, 0.16);
       --fbk-accent: #FA5539;
       --fbk-accent-ink: #D84025;
-      --fbk-block: #ea8078;
+      --fbk-block: var(--fbk-accent);
       --fbk-sugg: #cfb85e;
       --fbk-ques: #6fbdbd;
       --fbk-shadow: rgba(0, 0, 0, 0.5);
@@ -85,7 +85,7 @@
     --fbk-bd: rgba(255, 255, 255, 0.16);
     --fbk-accent: #FA5539;
     --fbk-accent-ink: #D84025;
-    --fbk-block: #ea8078;
+    --fbk-block: var(--fbk-accent);
     --fbk-sugg: #cfb85e;
     --fbk-ques: #6fbdbd;
     --fbk-shadow: rgba(0, 0, 0, 0.5);
@@ -476,13 +476,21 @@
   // ── anchors ─────────────────────────────────────────────────
   function headingFor(el) {
     if (el.dataset.fbkHeading) return el.dataset.fbkHeading;
+    if (/^H[1-6]$/.test(el.tagName)) return el.textContent.trim();
+    // A block that contains its own heading is named by it. Checking this
+    // before walking backward is what stops a run of sibling cards each
+    // taking its neighbour's heading.
+    var own = el.querySelector('h1,h2,h3,h4,h5,h6');
+    if (own) return own.textContent.trim();
+    // Otherwise walk back through direct siblings, then up a level. Only
+    // sibling headings count: one nested inside a previous card belongs to
+    // that card, so a note following a run of cards takes the section
+    // heading above them rather than the last card's.
     var node = el;
     while (node && node !== document.body) {
       var sib = node.previousElementSibling;
       while (sib) {
         if (/^H[1-6]$/.test(sib.tagName)) return sib.textContent.trim();
-        var nested = sib.querySelector('h1,h2,h3,h4,h5,h6');
-        if (nested) return nested.textContent.trim();
         sib = sib.previousElementSibling;
       }
       node = node.parentElement;
