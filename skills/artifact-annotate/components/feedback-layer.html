@@ -102,6 +102,11 @@
     font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     color: var(--fbk-fg);
   }
+  /* Deliverables commonly set a bare `:focus-visible` in their own accent.
+     That selector reaches into this component's fields and buttons, so the
+     chrome picks up the page's colour. One scoped rule outranks it and keeps
+     the tooling's focus ring the tooling's own. */
+  .fbk-root :focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
   .fbk-btn {
     all: unset;
     display: inline-block;
@@ -315,6 +320,7 @@
   .fbk-ctx { margin: 0 0 8px; font-size: 11.5px; color: var(--fbk-dim); }
   .fbk-ctx b { color: var(--fbk-fg); font-weight: 600; }
   .fbk-field { display: block; width: 100%; margin-bottom: 8px; padding: 7px 9px; border: 1px solid var(--fbk-bd); border-radius: 6px; background: var(--fbk-bg2); color: var(--fbk-fg); font: inherit; }
+  .fbk-field:focus-visible { border-color: var(--fbk-accent); }
   textarea.fbk-field { min-height: 68px; resize: vertical; }
   .fbk-kinds { display: flex; gap: 5px; margin-bottom: 8px; }
   .fbk-kinds .fbk-btn { flex: 1; text-align: center; padding: 5px 0; font-size: 11px; }

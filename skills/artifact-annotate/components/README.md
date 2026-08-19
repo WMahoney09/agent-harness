@@ -52,6 +52,8 @@ That moves the pin and the glow together. **The cursor does not follow it** — 
 
 Check contrast against the page ground before overriding. The marker is the only way a reviewer finds their own comments again.
 
+**The page can leak into the component.** A deliverable that sets a bare `:focus-visible` rule — common, and correct for its own content — reaches into this component's fields and buttons and paints the focus ring in the page's accent. The component defends itself with one scoped rule, `.fbk-root :focus-visible`, which outranks the unscoped selector. Any future styling that a page might set globally on elements rather than classes deserves the same treatment.
+
 ## Configuration
 
 Fill in `#feedback-config` and nothing else:
