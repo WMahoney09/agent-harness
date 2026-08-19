@@ -27,17 +27,30 @@ Emitting cids always costs a few tokens per block and no discipline, and it is t
 
 ---
 
-## The pin colour
+## The marker colour
 
-Markers, the review-mode cursor, and the glow under both come from one token, `--fbk-pin` — `#0F7C77` light, `#5CCFC6` dark. It is the component's own colour, not the page's, and that is deliberate: token names differ on every deliverable, so a component that read the page's accent would have to know a naming convention no artifact is required to follow.
+Markers, the review-mode cursor, and the glow under both come from `--fbk-pin`, which defaults to `--fbk-accent` — the component's own primary, the Immerse coral, the same colour on the Review and Send buttons.
 
-A deliverable that wants its markers to match its own palette overrides the token from its own stylesheet, after the component:
+Two values, for the reason the assessment's own stylesheet gives: the brand `#FA5539` puts white text at 3.3:1 and reads at 3.25:1 as text on a light ground, both under AA.
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `--fbk-accent` | `#D84025` | `#FA5539` | Outlines, borders, glow, accent text, cursor stroke |
+| `--fbk-accent-ink` | `#D84025` | `#D84025` | Any fill carrying white text — primary buttons, the pressed Review toggle |
+
+`#D84025` sits near the luminance midpoint, so it clears roughly 4.5:1 both as text on white and as a ground under white text. Dark mode can take the bright brand value for everything except filled buttons.
+
+It is the component's colour, not the page's, and that is the point. The tooling should read as one system across every deliverable, so a reviewer who has commented on one artifact recognises the affordance on the next. Reading the page's accent instead would also require a token-naming convention no artifact is obliged to follow.
+
+A deliverable that does want its markers in its own palette overrides the one token from its own stylesheet, after the component:
 
 ```css
 :root { --fbk-pin: var(--accent); }
 ```
 
-Nothing else needs changing — the cursor and the glow both derive from it. Overriding it with a colour that has poor contrast against the page ground is the one thing to check, since the marker is the only way a reviewer finds their own comments again.
+That moves the pin and the glow together. **The cursor does not follow it** — a `data:` URI cannot read a custom property, so the stroke colour is `--fbk-accent` written out as a literal in each theme block. Changing the primary means editing those two hexes as well.
+
+Check contrast against the page ground before overriding. The marker is the only way a reviewer finds their own comments again.
 
 ## Configuration
 

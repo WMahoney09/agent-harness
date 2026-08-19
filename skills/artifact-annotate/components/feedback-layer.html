@@ -38,16 +38,27 @@
     --fbk-bg: #ffffff;
     --fbk-bg2: #f4f4f5;
     --fbk-bd: rgba(0, 0, 0, 0.14);
-    --fbk-accent: #2f5fd0;
+    /* Immerse coral. The brand value #FA5539 gives white text 3.3:1 and reads
+       at 3.25:1 as text on a light ground, so light mode takes the deeper
+       #D84025 — which clears 4.5:1 in both directions — and dark mode takes
+       the bright value against its own ground. Filled buttons carrying white
+       text always use --fbk-accent-ink. */
+    --fbk-accent: #D84025;
+    --fbk-accent-ink: #D84025;
     --fbk-block: #b4291f;
     --fbk-sugg: #6a5a1f;
     --fbk-ques: #1f5a5a;
     --fbk-shadow: rgba(0, 0, 0, 0.16);
-    --fbk-pin: #0F7C77;
+    /* Markers follow the component's own primary — the same coral as Review
+       and Send — so the tooling reads as one system regardless of what the
+       deliverable's palette is doing. Override this token alone to recolour
+       markers, cursor, and glow together. */
+    --fbk-pin: var(--fbk-accent);
     /* Same bubble as the pin — circle with a squared bottom-left corner, and
        that corner is the hotspot, so the cursor points at what it will anchor
-       to. Data URI keeps it inside the CSP. */
-    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23ffffff' stroke='%230F7C77' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+       to. Data URI keeps it inside the CSP; a data URI cannot read a custom
+       property, so this hex is --fbk-accent written out and has to move with it. */
+    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23ffffff' stroke='%23D84025' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -56,13 +67,14 @@
       --fbk-bg: #171717;
       --fbk-bg2: #232323;
       --fbk-bd: rgba(255, 255, 255, 0.16);
-      --fbk-accent: #7ea2f0;
+      --fbk-accent: #FA5539;
+      --fbk-accent-ink: #D84025;
       --fbk-block: #ea8078;
       --fbk-sugg: #cfb85e;
       --fbk-ques: #6fbdbd;
       --fbk-shadow: rgba(0, 0, 0, 0.5);
-      --fbk-pin: #5CCFC6;
-      --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%235CCFC6' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+      --fbk-pin: var(--fbk-accent);
+      --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23FA5539' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
     }
   }
   :root[data-theme="dark"] {
@@ -71,13 +83,14 @@
     --fbk-bg: #171717;
     --fbk-bg2: #232323;
     --fbk-bd: rgba(255, 255, 255, 0.16);
-    --fbk-accent: #7ea2f0;
+    --fbk-accent: #FA5539;
+    --fbk-accent-ink: #D84025;
     --fbk-block: #ea8078;
     --fbk-sugg: #cfb85e;
     --fbk-ques: #6fbdbd;
     --fbk-shadow: rgba(0, 0, 0, 0.5);
-    --fbk-pin: #5CCFC6;
-    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%235CCFC6' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+    --fbk-pin: var(--fbk-accent);
+    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23FA5539' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
   }
 
   .fbk-root, .fbk-root * { box-sizing: border-box; }
@@ -104,7 +117,8 @@
   .fbk-btn:hover { border-color: var(--fbk-accent); }
   .fbk-btn:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
   .fbk-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-  .fbk-btn--primary { background: var(--fbk-accent); border-color: var(--fbk-accent); color: #fff; }
+  /* White text sits on this fill, so it takes the deeper coral in both themes. */
+  .fbk-btn--primary { background: var(--fbk-accent-ink); border-color: var(--fbk-accent-ink); color: #fff; }
 
   /* ── control bar ───────────────────────────────────────────── */
   .fbk-bar {
@@ -136,7 +150,7 @@
   }
   .fbk-count:hover { color: var(--fbk-fg); background: var(--fbk-bg2); }
   .fbk-count:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
-  .fbk-bar [aria-pressed="true"] { background: var(--fbk-accent); border-color: var(--fbk-accent); color: #fff; }
+  .fbk-bar [aria-pressed="true"] { background: var(--fbk-accent-ink); border-color: var(--fbk-accent-ink); color: #fff; }
 
   /* ── block affordances ─────────────────────────────────────── */
   [data-cid] { position: relative; }
