@@ -27,6 +27,18 @@ Emitting cids always costs a few tokens per block and no discipline, and it is t
 
 ---
 
+## The pin colour
+
+Markers, the review-mode cursor, and the glow under both come from one token, `--fbk-pin` — `#0F7C77` light, `#5CCFC6` dark. It is the component's own colour, not the page's, and that is deliberate: token names differ on every deliverable, so a component that read the page's accent would have to know a naming convention no artifact is required to follow.
+
+A deliverable that wants its markers to match its own palette overrides the token from its own stylesheet, after the component:
+
+```css
+:root { --fbk-pin: var(--accent); }
+```
+
+Nothing else needs changing — the cursor and the glow both derive from it. Overriding it with a colour that has poor contrast against the page ground is the one thing to check, since the marker is the only way a reviewer finds their own comments again.
+
 ## Configuration
 
 Fill in `#feedback-config` and nothing else:
