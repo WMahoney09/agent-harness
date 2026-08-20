@@ -11,7 +11,7 @@ A fixed, versioned block pasted into an artifact verbatim. It is a utility, not 
 
 ## `data-cid` — the anchor rule
 
-**Every commentable block carries `data-cid`, on every artifact, whether or not the feedback layer ships with it.** `artifact-craft` applies the rule as part of every build; this skill defines it.
+**Every commentable block carries `data-cid`, on every artifact, whether or not the feedback layer ships with it.** `artifact-build` applies the rule as part of every build; this skill defines it.
 
 A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen.
 

@@ -1,19 +1,25 @@
 ---
-name: artifact-annotate
+name: artifact-draft
 description: |
-  Adds commenting to a deliverable that leaves the org — an in-page review layer that exports to the clipboard or a file, plus the anchor rule that keeps comments matchable across revisions. `artifact-craft` decides that a deliverable needs this; this skill supplies it.
-  TRIGGER when: `artifact-craft` determines a deliverable will be read by someone who cannot comment on it in Claude, or when the user asks directly for something reviewable, annotatable, or "something they can leave feedback on." Also when republishing a deliverable that has already been reviewed, so prior feedback gets answered on the page.
+  Circulates a finished deliverable to stakeholders outside the org for comment, before a final version. Adds an in-page review layer that exports to the clipboard or a file, plus the anchor rule that keeps comments matchable across revisions. `artifact-build` decides that a deliverable needs this; this skill supplies it.
+  TRIGGER when: `artifact-build` determines a deliverable will be read by someone who cannot comment on it in Claude, or when the user asks to circulate one for comment — "send this out for review," "make this commentable," "share a draft with the client," "something they can leave feedback on." Also when republishing after a round of comments, so prior feedback gets answered on the page. NOT when the user asks to draft, write, or produce a document — that is the content skill's job, and this one runs after it.
 ---
 
-# Artifact Annotate
+# Artifact Draft
 
-Reviewability for a deliverable that leaves the organization. Three skills cooperate on one file:
+A deliverable is a **draft** when a stakeholder can comment on it, and **final** when they cannot. That is the only difference this skill makes, and it is the whole reason it exists.
+
+The workflow it replaces is posting a Markdown file to a shared drive and asking for comments in a thread. Same document, comments anchored to the block they are about, and a return path that lands in a form `/triage` can act on.
+
+**Final is the same page without this skill.** Same content skill, same `artifact-build` pass, stop before this one. Same `docId`, next `revision` — the final is the revision after the last round of responses, not a new document. Keeping one lineage is what lets `/triage` resolve a late comment against the draft the reviewer actually read.
+
+Three skills cooperate on one file:
 
 | Skill | Owns |
 |---|---|
 | `ideate:ontology`, `ideate:make-prd`, `ideate:make-summary`, … | What the document says |
-| `artifact-craft` | Treatment, palette, type, layout, voice, theme control, view routing — **and the decision that a deliverable needs commenting at all** |
-| **`artifact-annotate`** | The `data-cid` rule, the feedback component, config and transports, round-two responses |
+| `artifact-build` | Treatment, palette, type, layout, voice, theme control, view routing — **and the decision that a deliverable needs commenting at all** |
+| **`artifact-draft`** | The `data-cid` rule, the feedback component, config and transports, round-two responses |
 | `/triage` | Ingesting feedback once it comes back |
 
 ## Goal
@@ -24,31 +30,33 @@ A stakeholder outside the org opens an HTML file, comments on specific blocks, a
 
 | Input | Behavior |
 |---|---|
-| `artifact-craft` step 2 determined the deliverable leaves our control | Run it. That determination is the normal entry point. |
-| "Make this reviewable" / "annotatable" / "something they can leave feedback on" | Run it, and load `artifact-craft` if it is not already loaded. |
+| `artifact-build` step 2 determined this is a draft | Run it. That determination is the normal entry point. |
+| "Send this out for review" / "make this commentable" / "share a draft with the client" | Run it, and load `artifact-build` if it is not already loaded. |
+| "Draft me a PRD" / "draft up the ontology" | **Not this skill.** That is the content skill being asked for a first version. This one runs after there is something to circulate. |
+| The deliverable is final — signed off, or never going out for comment | Do not run it. `artifact-build` alone produces the final version. |
 | The same asked of a deliverable **already published as an artifact** | The ask is for the **file**, not the URL. Someone who could review it in Claude would use the artifact. Go to **Delivery** and hand over the HTML. |
 | Republishing something already reviewed | Skip to **Round two**. |
 | Feedback has come back and needs acting on | Hand to `/triage`. This skill's job is done. |
 
 ## Gate 0 — arrive before the build, not after
 
-**This skill contributes to `artifact-craft`'s build. It does not run a second pass over a finished page.**
+**This skill contributes to `artifact-build`'s build. It does not run a second pass over a finished page.**
 
-Retrofitting is where this goes wrong. If the page is built first and anchors are added afterward, they get assigned by an agent that did not decide the structure, and it does it badly. `artifact-craft` decides in step 2 that the deliverable needs commenting, loads this skill before step 3, builds with that known, and pastes the component in at the end.
+Retrofitting is where this goes wrong. If the page is built first and anchors are added afterward, they get assigned by an agent that did not decide the structure, and it does it badly. `artifact-build` decides in step 2 that the deliverable needs commenting, loads this skill before step 3, builds with that known, and pastes the component in at the end.
 
 Arriving after a finished page means going back to step 3 rather than patching what is there.
 
-**The determination itself belongs to `artifact-craft`,** including the question it asks when the audience is unclear. That skill runs on every artifact; this one does not. A test that lived only here would never be applied to the artifacts that most need it.
+**The determination itself belongs to `artifact-build`,** including the question it asks when the audience is unclear. That skill runs on every artifact; this one does not. A test that lived only here would never be applied to the artifacts that most need it.
 
 ## The build
 
 ### 1. Anchors
 
-Every commentable block carries `data-cid`. The rule, the format, and the coupling to content-skill headings are in `components/README.md`. `artifact-craft` applies it on every artifact regardless of this skill, so on a reviewable deliverable it should already be done — verify rather than add.
+Every commentable block carries `data-cid`. The rule, the format, and the coupling to content-skill headings are in `components/README.md`. `artifact-build` applies it on every artifact regardless of this skill, so on a reviewable deliverable it should already be done — verify rather than add.
 
 ### 2. Multi-view deliverables
 
-A deliverable spanning several pages is one file with hash-routed views, via `artifact-craft`'s `view-router.html`. Relative links between separate local HTML files are never used; the reasons are in that skill's component README.
+A deliverable spanning several pages is one file with hash-routed views, via `artifact-build`'s `view-router.html`. Relative links between separate local HTML files are never used; the reasons are in that skill's component README.
 
 One file means one `docId`, one storage bucket, and one submission covering every view. A reviewer who comments across three views presses Send once.
 
@@ -70,13 +78,29 @@ Ingested feedback resolves its anchors against the exact revision the reviewer r
 
 An artifact URL is an in-org surface: opening it needs a Claude account and a share, and the built-in comments already work there. A reviewer who has that access does not need this skill. The component exists for the reviewer who has none of it — a client VP, an outside contractor, someone who gets a file over mail and opens it in Safari. **That person cannot be handed a link.** Publishing alongside is fine, for the team's own copy. It is never the handover.
 
-Run all five steps, in order:
+**Write it to a real path first**, never the session scratchpad — the engagement repo at `ideate/artifacts/<docId>.html`, and a working copy where the user is if that is elsewhere. Step 4 already requires the committed copy; this is the same file, not a second one.
 
-1. **Write it to a real path**, never the session scratchpad — the engagement repo at `ideate/artifacts/<docId>.html`, and a working copy where the user is if that is elsewhere. Step 4 already requires the committed copy; this is the same file, not a second one.
-2. **Open it: `open <abs-path>` on macOS, `xdg-open` on Linux.** The user needs to see the thing before it goes to a client, and a browser is the only place the review mode actually runs. Do this without being asked.
-3. **Reveal it in the file manager: `open -R <abs-path>` on macOS**, or `xdg-open "$(dirname <abs-path>)"` on Linux. The handover to the client is an attachment, and attaching means dragging the file out of a window. Selecting it for them is the difference between "here is where it lives" and "here it is." Also do this without being asked.
-4. **Print the absolute path on its own line** so it is clickable in the harness and copyable everywhere else. A relative path is not a handover.
-5. **`SendUserFile` as well.** It renders a download card on web and desktop. **It is a no-op in the terminal**, where the statusline shows published artifacts and nothing else — so it supplements steps 2 through 4 and never replaces them.
+Then hand it over by the route the surface supports. **Read the surface, do not assume it:**
+
+```
+printenv CLAUDE_CODE_ENTRYPOINT
+```
+
+| Value | Surface | Handover |
+|---|---|---|
+| `cli` | A real terminal | `open <abs-path>` to view it, `open -R <abs-path>` to reveal it, print the absolute path on its own line, **and** `SendUserFile` |
+| anything else, or unset | Desktop app, web, or an unknown GUI | `SendUserFile` alone — it renders the file inline where the user already is |
+
+Key on `cli` and treat every other value as a GUI surface. The terminal value is known; the others are not worth guessing at, and this rule stays correct whatever they turn out to be.
+
+**Why the split.** `SendUserFile` renders a card the user can open and drag; in the terminal it produces nothing visible, and the statusline shows published artifacts only, so a file delivered that way silently does not arrive. `open` and `open -R` are the reverse — they act on the machine the shell is on, which is the user's machine in a terminal session and nobody's business in a hosted one.
+
+**On the terminal path, do all four without being asked.** The browser is the only place the review mode actually runs, so the user needs to see it before it goes to a client. The handover to that client is an attachment, and attaching means dragging the file out of a window — selecting it in Finder is the difference between "here is where it lives" and "here it is."
+
+Two guards on the terminal path:
+
+- **`SSH_CONNECTION` or `SSH_TTY` set** — skip `open` and `open -R` entirely. They would act on the remote host, opening a browser nobody is looking at. Print the path and say which machine the file is on.
+- **Linux** — `xdg-open <abs-path>` to view, `xdg-open "$(dirname <abs-path>)"` to reveal. Where neither exists, print the path and stop.
 
 Then two lines in the message, not on the page:
 
@@ -104,7 +128,7 @@ This skill's obligation to that handoff is the format and the source. `gnar.arti
 
 ## Closure Criteria
 
-- [ ] Loaded before `artifact-craft` step 3, not retrofitted onto a finished page
+- [ ] Loaded before `artifact-build` step 3, not retrofitted onto a finished page
 - [ ] Every commentable block carries `data-cid`; ids preserved from the prior revision
 - [ ] Multi-view deliverables use hash routing in one file; no relative links between local files
 - [ ] `feedback-layer.html` pasted verbatim, last, unrestyled
@@ -112,7 +136,8 @@ This skill's obligation to that handoff is the format and the source. `gnar.arti
 - [ ] `to` is the engagement address, not a personal one
 - [ ] Source committed to `ideate/artifacts/<docId>.html` with the revision recoverable
 - [ ] Review mode exercised once end to end: comment, Send, all three export paths reachable
-- [ ] **The file was opened in the user's browser** (`open` / `xdg-open`), **revealed in the file manager** (`open -R`), its absolute path printed on its own line, and `SendUserFile` called — an artifact URL is not a handover, and `SendUserFile` alone is a no-op in the terminal
+- [ ] **The surface was read** (`printenv CLAUDE_CODE_ENTRYPOINT`), not assumed
+- [ ] **Handed over by the matching route** — terminal: opened, revealed, path printed, `SendUserFile`; GUI: `SendUserFile` alone. An artifact URL is not a handover on either.
 - [ ] Handover message tells the reviewer the review mode exists, and which return paths work where the file is going
 - [ ] Round two only: `#feedback-responses` present, every prior item carries a disposition
 
@@ -122,6 +147,6 @@ This skill's obligation to that handoff is the format and the source. `gnar.arti
 
 **The transport is pluggable on purpose.** `endpoint: null` today means export only. Setting it turns the primary action into a direct submit and demotes export to a fallback, with no other change to the component or the ingest path. That is what keeps a hosted review platform — Spacebase or otherwise, with real identity, live threads, and an MCP surface agents can watch — an addition rather than a migration.
 
-**Why this is a separate skill from `artifact-craft`.** They change for different reasons. `artifact-craft` changes when house style changes. This changes when delivery mechanics change — a new transport, a hosted platform, a different anchor scheme. Keeping the feedback layer inside the style skill would couple two things that have never moved together.
+**Why this is a separate skill from `artifact-build`.** They change for different reasons. `artifact-build` changes when house style changes. This changes when delivery mechanics change — a new transport, a hosted platform, a different anchor scheme. Keeping the feedback layer inside the style skill would couple two things that have never moved together.
 
 **Identity is self-declared until a platform vouches for it.** `reviewer.verified` is `false` on every export transport and the field exists from v1 so the hosted path needs no schema bump. The trust model in the meantime is that we know who we sent the file to.

@@ -1,11 +1,11 @@
 ---
-name: artifact-craft
+name: artifact-build
 description: |
   The build sequence for a published Artifact — treatment read, written design plan, then code, then a pre-publish check. Wraps the built-in `artifact-design` skill with the gates and house rules that keep output from drifting toward generic. Produces pages that read as considered work, not as generated pages.
   TRIGGER when: building anything that will be published with the Artifact tool — a report, map, dashboard, plan, memo, reference, or deliverable with an audience. Also when revising or redeploying an existing artifact, and when the user asks why an artifact "looks generated" or wants a previous artifact's quality repeated.
 ---
 
-# Artifact Craft
+# Artifact Build
 
 The discipline around building a published Artifact. `artifact-design` (built-in, ships with the Artifact tool) supplies the fundamentals — theme tokens, CSP constraints, layout mechanics, the list of AI-default looks to avoid. This skill supplies the **sequence**, the **gates**, and the **house rules**, and it does not repeat what the built-in already covers.
 
@@ -35,7 +35,7 @@ If the page needs live data, shared state, file downloads, or self-updating, als
 
 Two fixed components live in `components/` next to this file — a theme control and a view router. They are pasted verbatim, never regenerated. Read `components/README.md` before using either.
 
-**Whether the deliverable needs commenting is decided here, in step 2.** `artifact-annotate` supplies the commenting; this skill decides that it is needed and loads it. That split matters because this skill runs on every artifact and that one does not — a determination that lived only in `artifact-annotate` would never get made on the artifacts that most need it.
+**Draft or final is decided here, in step 2.** `artifact-draft` supplies the commenting that makes a deliverable a draft; this skill decides that it is one and loads it. That split matters because this skill runs on every artifact and that one does not — a determination that lived only in `artifact-draft` would never get made on the artifacts that most need it.
 
 ### 2. Read the request and calibrate the treatment
 
@@ -53,17 +53,17 @@ Getting this wrong is the most expensive error available. An editorial treatment
 
 *Does this deliverable span several pages?* If so it is one file with hash-routed views — see step 3. Never a set of local HTML files linking to each other.
 
-*Does this file leave our control?* **Answer this on every artifact, and answer it here.**
+*Is this a draft or the final version?* **Answer this on every artifact, and answer it here.**
 
-If the reader can comment on it inside Claude, the built-in comments already handle review and nothing more is needed. If the reader is a client stakeholder, an outside contractor, or anyone who will open the file in their own browser — over Slack, over email, as a raw file — the deliverable needs commenting, and `artifact-annotate` supplies it. Load it now, before step 3, because its answer changes what gets built.
+A deliverable is a **draft** when someone outside the org needs to comment on it, and **final** when they do not. A draft loads `artifact-draft` now, before step 3, because its answer changes what gets built. A final version is this skill alone.
 
-The test is the audience's access, not the word "client." An internal reference for the team does not need it. A PRD going to a client's VP does.
+Two things make it a draft: the reader cannot comment on it inside Claude, and their comments are still wanted. A client stakeholder, an outside contractor, anyone opening the file in their own browser — draft. An internal reference, or a deliverable already signed off and going out for the record — final. The test is the audience's access and whether the door is still open, not the word "client."
 
 **When it is genuinely unclear, ask.** One question, before any file is written:
 
-> Who reads this — someone in our org who can comment on it in Claude, or someone outside it?
+> Is this going out for comment, or is it the final version?
 
-Do not guess, and do not build both ways. Asking costs one turn. Guessing wrong costs either a stripped-down rebuild or a client with no way to respond. Overridable both directions on request: "make this reviewable," "skip the feedback layer."
+Do not guess, and do not build both ways. Asking costs one turn. Guessing wrong costs either a stripped-down rebuild or a client with no way to respond. Overridable both directions on request: "send it out for comment," "this one is final."
 
 ### 3. Write the design plan before any code
 
@@ -91,7 +91,7 @@ Relative links between separate local HTML files are never used. They need the w
 
 The nav is design surface and gets styled with the page; style `aria-current="page"` rather than adding a class. The router itself, and the size arithmetic for a mockup-heavy deliverable, are in `components/README.md`.
 
-**The components claim fixed screen corners** — theme control top-right, and, when `artifact-annotate` is in play, a feedback bar bottom-right with a drawer along the right edge. Leave those corners free of anything the reader needs. Do not restyle the components to match the palette: they are tooling, and staying visually neutral is what lets a reader tell the deliverable from the controls.
+**The components claim fixed screen corners** — theme control top-right, and, when `artifact-draft` is in play, a feedback bar bottom-right with a drawer along the right edge. Leave those corners free of anything the reader needs. Do not restyle the components to match the palette: they are tooling, and staying visually neutral is what lets a reader tell the deliverable from the controls.
 
 ### 4. Build from the plan
 
@@ -106,9 +106,9 @@ Follow the plan you wrote. If you find yourself deviating, revise the plan first
 
 A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen. The format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`.
 
-`artifact-annotate` owns the rule and the stability discipline; this skill applies it unconditionally. It costs a few tokens per block and no thought, and it is the one property that is expensive to retrofit — an artifact carrying cids can accept feedback later by any route and still resolve anchors.
+`artifact-draft` owns the rule and the stability discipline; this skill applies it unconditionally. It costs a few tokens per block and no thought, and it is the one property that is expensive to retrofit — an artifact carrying cids can accept feedback later by any route and still resolve anchors.
 
-**Paste the components in, last, verbatim.** Theme control, then the view router if the deliverable spans views, then `artifact-annotate`'s feedback layer if step 2 called for it.
+**Paste the components in, last, verbatim.** Theme control, then the view router if the deliverable spans views, then `artifact-draft`'s feedback layer if step 2 called for it.
 
 **Write the copy as content, not filler.** Verdict first — the opening sentence carries the answer, support follows. Real content throughout, never lorem. Name things the way a reader recognizes them, not the way the system is built.
 
@@ -169,7 +169,7 @@ Also banned:
 
 An `.html` file (or `.md` when the treatment read calls for it), written to the session scratchpad unless the user names a location, then published with the Artifact tool.
 
-**When `artifact-annotate` is in play the scratchpad is not enough** — the source has to be committed so feedback can resolve against the exact revision the reviewer read. That skill owns where it goes.
+**When `artifact-draft` is in play the scratchpad is not enough** — the source has to be committed so feedback can resolve against the exact revision the reviewer read. That skill owns where it goes.
 
 No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output template would produce exactly the templated sameness the skill is written to prevent — the structure must come from the subject each time.
 
@@ -184,8 +184,8 @@ No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output 
 - [ ] Theme control pasted in and cycles through `○ ◐ ●` correctly
 - [ ] Every commentable block carries `data-cid`; ids preserved on a redeploy
 - [ ] Multi-view deliverables use hash routing in one file; nav, deep links, back button, and print all verified
-- [ ] The leaves-our-control question was answered explicitly — asked when unclear, never guessed
-- [ ] `artifact-annotate` loaded when the answer was yes
+- [ ] Draft or final was answered explicitly — asked when unclear, never guessed
+- [ ] `artifact-draft` loaded when the answer was yes
 - [ ] Wide content scrolls in its own container; page body does not scroll sideways
 - [ ] Title is a specific two-to-four-word name; `description` and `favicon` set
 - [ ] House prose rules run over every line, headings and card copy included
@@ -204,8 +204,8 @@ No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output 
 
 **Why the components are fixed rather than authored per page.** A theme control that behaves differently on every deliverable is a bug surface, and a router regenerated each time will drop deep links about half the time. They are small enough to paste and stable enough to trust.
 
-**Where the boundary with `artifact-annotate` sits.** This skill owns how the page looks, reads, and navigates, and it owns the decision that a deliverable needs commenting. That one owns the commenting itself — the component, the anchor rule, the transports, the round-two responses.
+**Where the boundary with `artifact-draft` sits.** This skill owns how the page looks, reads, and navigates, and it owns the decision that a deliverable needs commenting. That one owns the commenting itself — the component, the anchor rule, the transports, the round-two responses.
 
-The decision lives here because this skill runs on every artifact and that one does not. A determination made only inside `artifact-annotate` would never be reached on an artifact where nobody thought to load it, which is exactly the artifact that ships to a client with no way to respond.
+The decision lives here because this skill runs on every artifact and that one does not. A determination made only inside `artifact-draft` would never be reached on an artifact where nobody thought to load it, which is exactly the artifact that ships to a client with no way to respond.
 
 They meet at two points and no others: `data-cid` on commentable blocks, and the right-hand screen corners staying free. Keeping the component here would couple two things that have never changed for the same reason.

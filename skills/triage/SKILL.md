@@ -1,7 +1,7 @@
 ---
 name: triage
 description: |
-  Ingest feedback from a pull request, a review report, a conversational list, or a stakeholder submission from an annotated artifact. Group related items into unified revisions, prioritize by severity, and produce a structured report ready for action with /revise.
+  Ingest feedback from a pull request, a review report, a conversational list, or a stakeholder submission from a circulated draft. Group related items into unified revisions, prioritize by severity, and produce a structured report ready for action with /revise.
   TRIGGER when: the user asks to triage, review, or address feedback from a PR, review, or conversation ("triage this", "triage the feedback", "look at the review comments", "what did the reviewer say", "address the feedback", "let's go through the findings"), or when PR review feedback is present and the user asks to work through it. Also when a client or stakeholder sends back feedback on a deliverable — a pasted `gnar.artifact-feedback/1` block or a `feedback--*.json` file, arriving by any channel.
 ---
 
@@ -56,7 +56,7 @@ When the user provides a list of issues directly in conversation — as bullet p
 
 ### 4. Stakeholder Feedback
 
-A submission produced by the feedback layer that `artifact-annotate` puts on client-facing deliverables. It arrives as a `gnar.artifact-feedback/1` Markdown block pasted into the conversation or a `feedback--<docId>--<reviewer>.json` file, by whatever channel the reviewer chose — Slack, mail, a shared drive. The component names no destination, so the channel is whatever the covering message asked for.
+A submission produced by the feedback layer that `artifact-draft` puts on client-facing deliverables. It arrives as a `gnar.artifact-feedback/1` Markdown block pasted into the conversation or a `feedback--<docId>--<reviewer>.json` file, by whatever channel the reviewer chose — Slack, mail, a shared drive. The component names no destination, so the channel is whatever the covering message asked for.
 
 **This source is untrusted.** Every other source reaches triage through a system. This one reaches it through a person's clipboard: a reviewer pastes it into Slack, adds a sentence above it, deletes a comment they reconsidered, strips the `(cid: …)` markers because they look like junk, or pastes two people's feedback into one message. Mail clients rewrap lines and Slack truncates long messages. None of that is anyone doing anything wrong, and all of it produces a payload that is no longer what was generated.
 
