@@ -33,16 +33,23 @@ Emitting cids always costs a few tokens per block and no discipline, and it is t
 
 ## The marker colour
 
-Markers, the review-mode cursor, and the glow under both come from `--fbk-pin`, which defaults to `--fbk-accent` — the component's own primary, the Immerse coral, the same colour on the Review and Send buttons.
-
-Two values, for the reason the assessment's own stylesheet gives: the brand `#FA5539` puts white text at 3.3:1 and reads at 3.25:1 as text on a light ground, both under AA.
+The component runs on **Hot Slate** — the named tool-chrome ramp in `docs/reference/hot-slate.md`, which carries the full palette, the contrast table, and the techniques. What follows is only what the feedback layer does with it.
 
 | Token | Light | Dark | Used for |
 |---|---|---|---|
-| `--fbk-accent` | `#D84025` | `#FA5539` | Outlines, borders, glow, accent text, cursor stroke |
-| `--fbk-accent-ink` | `#D84025` | `#D84025` | Any fill carrying white text — primary buttons, the pressed Review toggle |
+| `--fbk-heat-0` | `#6B7285` | `#6B7285` | Ramp cool end |
+| `--fbk-heat-1` | `#B04A3A` | `#B04A3A` | Ramp middle |
+| `--fbk-heat-2` | `#C27620` | `#C27620` | Ramp warm end — rings, glows, rules only |
+| `--fbk-accent` | `#B04A3A` | `#D06A55` | Solid outlines, focus rings, accent text, cursor stroke |
+| `--fbk-ink-0` | `#C1341F` | `#C1341F` | Filled-control gradient start |
+| `--fbk-accent-ink` | `#D84025` | `#D84025` | Solid fill under white text |
+| `--fbk-warm-ink` | `#B05F16` | `#B05F16` | Filled-control gradient end |
 
-`#D84025` sits near the luminance midpoint, so it clears roughly 4.5:1 both as text on white and as a ground under white text. Dark mode can take the bright brand value for everything except filled buttons.
+Ramp stops clear 3:1 on both grounds, so the ramp itself needs no theme split. Only `--fbk-accent` does — the brick drops to 3.5:1 as text on a dark ground.
+
+**The ramp has two warm terminals.** `--fbk-heat-2` wherever it is a ring, glow, or rule. `--fbk-warm-ink` wherever text sits on it — white on `#C27620` is 3.6:1, and `#B05F16` is the same amber pulled down to 4.65:1. Send feedback, the Reviewing toggle, and the three kind selectors are all filled controls and all terminate at the ink value.
+
+Where the ramp appears: marker rings and their glow, the panel header rule, the region wash, and the filled controls as narrow bands — blocking at the ramp's middle, suggestion at the warm end, question at the cool end. Solid `--fbk-accent` handles anything a gradient cannot be, which is outlines and text.
 
 It is the component's colour, not the page's, and that is the point. The tooling should read as one system across every deliverable, so a reviewer who has commented on one artifact recognises the affordance on the next. Reading the page's accent instead would also require a token-naming convention no artifact is obliged to follow.
 
@@ -64,8 +71,8 @@ Fill in `#feedback-config` and nothing else:
 
 ```json
 {
-  "docId": "halo-oms-tech-approach",
-  "title": "Halo OMS Technical Approach",
+  "docId": "platform-tech-approach",
+  "title": "Platform Technical Approach",
   "revision": "2026-08-19T14:02:00Z",
   "to": "will@gnar.dog",
   "cc": [],
@@ -95,10 +102,10 @@ A multi-view deliverable is one file and therefore one `docId`, one storage buck
 The subject line is the automation hook:
 
 ```
-Feedback: halo-oms-tech-approach 2026-08-19T14:02:00Z — Dana Ruiz
+Feedback: platform-tech-approach 2026-08-19T14:02:00Z — Dana Ruiz
 ```
 
-Nothing in this skill watches for those emails. The format exists so that something else can — a scheduled agent searching Gmail on `subject:"Feedback: halo-oms-tech-approach"` finds every submission with no ambiguity. Where that watcher lives is a separate decision.
+Nothing in this skill watches for those emails. The format exists so that something else can — a scheduled agent searching Gmail on `subject:"Feedback: platform-tech-approach"` finds every submission with no ambiguity. Where that watcher lives is a separate decision.
 
 **Copy emits Markdown, not JSON.** It reads in a Slack message unaided and parses just as reliably from a fixed grammar. Download emits JSON.
 
@@ -107,8 +114,8 @@ Nothing in this skill watches for those emails. The format exists so that someth
 Stable. The ingest side parses it; changing it is a schema bump.
 
 ```
-Feedback — Halo OMS Technical Approach
-doc: halo-oms-tech-approach · rev: 2026-08-19T14:02:00Z
+Feedback — Platform Technical Approach
+doc: platform-tech-approach · rev: 2026-08-19T14:02:00Z
 reviewer: Dana Ruiz
 comments: 2
 schema: gnar.artifact-feedback/1

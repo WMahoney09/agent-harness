@@ -11,9 +11,12 @@ Derived from the blackbody progression in `gnar-statusline.sh` (`gradient_at`), 
 | `--hs-cool` | `#6B7285` | Ramp start. Cool slate. |
 | `--hs-mid` | `#B04A3A` | Ramp middle, and the solid accent on light grounds. Brick. |
 | `--hs-warm` | `#C27620` | Ramp end. Amber. **Never carries text.** |
+| `--hs-warm-ink` | `#B05F16` | The same amber at text-safe luminance. Warm terminus of any *filled* control. |
 | `--hs-lift` | `#D06A55` | The mid, lifted. Solid accent on dark grounds, where the brick is too dark for text. |
-| `--hs-ink-0` | `#C1341F` | Filled-button gradient start. |
-| `--hs-ink-1` | `#D84025` | Filled-button gradient end, and the solid fill under white text. |
+| `--hs-ink-0` | `#C1341F` | Filled-control gradient start. |
+| `--hs-ink-1` | `#D84025` | Solid fill under white text. |
+
+**The ramp has two warm terminals.** `--hs-warm` wherever the gradient is a ring, glow, or rule. `--hs-warm-ink` wherever text sits on it — white on `#C27620` is 3.6:1, under the 4.5:1 text bar, and `#B05F16` is the same amber pulled down to 4.65:1. A filled control running the ramp ends at the ink value; everything else ends at the true amber.
 
 ```css
 --hs-ramp: linear-gradient(120deg, #6B7285, #B04A3A, #C27620);
@@ -33,6 +36,7 @@ Grounds assumed: light `#F5F6F7`, dark `#101114`.
 | `#6B7285` cool | 4.8 | 4.4 | 3.9 | Text and non-text, both themes |
 | `#B04A3A` mid | 5.4 | 5.0 | 3.5 | Text on light; non-text everywhere |
 | `#C27620` warm | 3.6 | 3.3 | 5.3 | **Non-text only** |
+| `#B05F16` warm-ink | 4.7 | 4.2 | 3.9 | Text and non-text, both themes |
 | `#D06A55` lift | 3.6 | 3.0 | 5.3 | Text on dark; non-text everywhere |
 | `#C1341F` ink-0 | 5.6 | 5.2 | 2.9 | Fills under white text |
 | `#D84025` ink-1 | 4.5 | 4.1 | 3.3 | Fills under white text |
@@ -43,7 +47,7 @@ Ratios are hand-computed from sRGB relative luminance. Re-run them through a che
 
 ## Rules
 
-**The warm end never sits under text.** White on `#C27620` is 3.6:1. The lightest warm value that holds white text at 4.5:1 is `#D84025`, which is why filled buttons stop there and never run the ramp.
+**The warm end never sits under text.** White on `#C27620` is 3.6:1. A filled control that wants the ramp's warm end terminates at `--hs-warm-ink` instead — same hue, text-safe luminance.
 
 **The ramp goes on rings, glows, rules, and region borders.** Those carry no text, they are where a gradient actually reads, and they are what makes the tooling recognisable across deliverables.
 
@@ -74,7 +78,7 @@ Ratios are hand-computed from sRGB relative luminance. Re-run them through a che
 
 **Glow.** Layer three shadows in the ramp's colours rather than one — a tight halo, a mid bloom, a wide falloff. Stacking is what makes it read as a gradient rather than a flat ring, and box-shadows follow `border-radius` so the glow takes the shape.
 
-**Filled buttons.** `linear-gradient(160deg, #C1341F, #D84025)` reads as a lit surface while staying inside the white-text budget.
+**Filled controls.** `linear-gradient(135deg in oklab, #C1341F, #B05F16)` for the hot end, `#6B7285 → #B04A3A` for a cool-skewed one. A set of related controls reads best as narrow bands at different positions on the ramp rather than as separate colours — one scale, several points on it.
 
 ## Where it came from
 
