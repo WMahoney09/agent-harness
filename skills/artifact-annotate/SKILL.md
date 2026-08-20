@@ -1,7 +1,7 @@
 ---
 name: artifact-annotate
 description: |
-  Adds commenting to a deliverable that leaves the org — an in-page review layer with three return paths, plus the anchor rule that keeps comments matchable across revisions. `artifact-craft` decides that a deliverable needs this; this skill supplies it.
+  Adds commenting to a deliverable that leaves the org — an in-page review layer that exports to the clipboard or a file, plus the anchor rule that keeps comments matchable across revisions. `artifact-craft` decides that a deliverable needs this; this skill supplies it.
   TRIGGER when: `artifact-craft` determines a deliverable will be read by someone who cannot comment on it in Claude, or when the user asks directly for something reviewable, annotatable, or "something they can leave feedback on." Also when republishing a deliverable that has already been reviewed, so prior feedback gets answered on the page.
 ---
 
@@ -26,6 +26,7 @@ A stakeholder outside the org opens an HTML file, comments on specific blocks, a
 |---|---|
 | `artifact-craft` step 2 determined the deliverable leaves our control | Run it. That determination is the normal entry point. |
 | "Make this reviewable" / "annotatable" / "something they can leave feedback on" | Run it, and load `artifact-craft` if it is not already loaded. |
+| The same asked of a deliverable **already published as an artifact** | The ask is for the **file**, not the URL. Someone who could review it in Claude would use the artifact. Go to **Delivery** and hand over the HTML. |
 | Republishing something already reviewed | Skip to **Round two**. |
 | Feedback has come back and needs acting on | Hand to `/triage`. This skill's job is done. |
 
@@ -55,7 +56,7 @@ One file means one `docId`, one storage bucket, and one submission covering ever
 
 `components/feedback-layer.html`, verbatim, last — after the theme control and the router. Fill in `#feedback-config` and change nothing else.
 
-The address in `to` is the engagement address, never a personal one. It ships inside a file handed to a client.
+`#feedback-config` holds four fields — `docId`, `title`, `revision`, `endpoint` — and no address. That is deliberate: a component that knew where feedback should go would ship that address inside a file handed to a client, and would need a per-installation default that anyone installing the skill would inherit.
 
 ### 4. Commit the source
 
@@ -63,13 +64,29 @@ The address in `to` is the engagement address, never a personal one. It ships in
 
 Ingested feedback resolves its anchors against the exact revision the reviewer read. A client who sits on a file for two weeks and sends comments against revision 2 while we are on revision 4 needs revision 2 to still exist. A file that only ever lived in a session directory leaves round two guessing.
 
-### 5. Say what the reviewer should do
+### 5. Delivery — put the file in the user's hands
 
-When handing over the file, one line in the message — not on the page:
+**The deliverable is the `.html` file on disk. Publishing it as an artifact does not deliver it.**
 
-> Click Review, comment on anything, then hit Send feedback. Email is one click and needs no editing.
+An artifact URL is an in-org surface: opening it needs a Claude account and a share, and the built-in comments already work there. A reviewer who has that access does not need this skill. The component exists for the reviewer who has none of it — a client VP, an outside contractor, someone who gets a file over mail and opens it in Safari. **That person cannot be handed a link.** Publishing alongside is fine, for the team's own copy. It is never the handover.
+
+Run all five steps, in order:
+
+1. **Write it to a real path**, never the session scratchpad — the engagement repo at `ideate/artifacts/<docId>.html`, and a working copy where the user is if that is elsewhere. Step 4 already requires the committed copy; this is the same file, not a second one.
+2. **Open it: `open <abs-path>` on macOS, `xdg-open` on Linux.** The user needs to see the thing before it goes to a client, and a browser is the only place the review mode actually runs. Do this without being asked.
+3. **Reveal it in the file manager: `open -R <abs-path>` on macOS**, or `xdg-open "$(dirname <abs-path>)"` on Linux. The handover to the client is an attachment, and attaching means dragging the file out of a window. Selecting it for them is the difference between "here is where it lives" and "here it is." Also do this without being asked.
+4. **Print the absolute path on its own line** so it is clickable in the harness and copyable everywhere else. A relative path is not a handover.
+5. **`SendUserFile` as well.** It renders a download card on web and desktop. **It is a no-op in the terminal**, where the statusline shows published artifacts and nothing else — so it supplements steps 2 through 4 and never replaces them.
+
+Then two lines in the message, not on the page:
+
+> Click Review, comment on anything, then hit Send feedback and copy it. Paste it back to me here.
+
+**Name the destination in that message.** The component holds no address — nothing about where feedback should go ships inside a file handed to a client — so the covering note is the only place a reviewer learns where to send it.
 
 A reviewer who does not know the review mode exists will read the whole document and reply with a paragraph in Slack.
+
+Say which return paths work where the file is going. `<a download>` is inert inside the claude.ai artifact viewer and works on a local file, so the same page has different capabilities depending on how it was opened — nobody should have to discover that by trying it.
 
 ## Round two
 
@@ -95,7 +112,8 @@ This skill's obligation to that handoff is the format and the source. `gnar.arti
 - [ ] `to` is the engagement address, not a personal one
 - [ ] Source committed to `ideate/artifacts/<docId>.html` with the revision recoverable
 - [ ] Review mode exercised once end to end: comment, Send, all three export paths reachable
-- [ ] Handover message tells the reviewer the review mode exists
+- [ ] **The file was opened in the user's browser** (`open` / `xdg-open`), **revealed in the file manager** (`open -R`), its absolute path printed on its own line, and `SendUserFile` called — an artifact URL is not a handover, and `SendUserFile` alone is a no-op in the terminal
+- [ ] Handover message tells the reviewer the review mode exists, and which return paths work where the file is going
 - [ ] Round two only: `#feedback-responses` present, every prior item carries a disposition
 
 ## Notes

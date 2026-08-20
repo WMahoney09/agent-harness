@@ -44,8 +44,8 @@
     },
 
     "transport": {
-      "enum": ["clipboard", "download", "mailto", "api"],
-      "description": "How this submission came back. Recorded to judge whether a hosted platform is earning its keep."
+      "enum": ["clipboard", "download", "api"],
+      "description": "How this submission came back. Recorded to judge whether a hosted platform is earning its keep. A 'mailto' transport existed in an earlier revision and was removed; treat it as unrecognized if an old payload carries it."
     },
 
     "exportedAt": { "type": "string", "description": "ISO 8601. Part of the idempotency key." },

@@ -74,40 +74,34 @@ Fill in `#feedback-config` and nothing else:
   "docId": "platform-tech-approach",
   "title": "Platform Technical Approach",
   "revision": "2026-08-19T14:02:00Z",
-  "to": "will@gnar.dog",
-  "cc": [],
   "endpoint": null
 }
 ```
 
 - `docId` — matches the source filename in `ideate/artifacts/`. Also namespaces localStorage, which matters because Chrome puts every `file://` page on one shared origin and two deliverables on the same laptop would otherwise collide.
 - `revision` — the publish timestamp. Ingestion resolves anchors against *this* revision's HTML, not current HEAD. A client who sits on a file for two weeks still gets exact anchors.
-- `to` / `cc` — **engagement address, never a personal one.** This ships inside a file handed to a client.
 - `endpoint` — `null` today. When set, the sheet gains a Submit button that POSTs the record directly and export becomes the fallback. The transport is pluggable so a hosted platform adds a route rather than changing the component.
+
+**No address is configured, deliberately.** Nothing in the component knows where feedback should go, so nothing about where it should go ships inside a file handed to a client. A reviewer sends their export wherever the covering message told them to.
 
 A multi-view deliverable is one file and therefore one `docId`, one storage bucket, and one submission covering every view.
 
 ---
 
-## The three return paths
+## The two return paths
 
 | Path | Reviewer effort | Ceiling | Ingest |
 |---|---|---|---|
-| Email | One click | ~1,900 chars of URL | Deterministic subject, Gmail connector |
 | Copy → paste | Two steps, any channel | None | Wherever they pasted |
 | Download → send | Highest | None | Whatever channel they chose |
 
-**Email is length-guarded.** `mailto:` carries no attachments — RFC 6068 supports subject and body only, and the non-standard `attachment=` that old Windows clients honoured is closed off everywhere. The OS handoff truncates past roughly 2,048 characters, so the component builds the URL, measures it, and disables the email option with an explanation when it would not survive. Silent truncation is the failure mode worth spending code to prevent: the client hits send believing they submitted everything.
-
-The subject line is the automation hook:
-
-```
-Feedback: platform-tech-approach 2026-08-19T14:02:00Z — Dana Ruiz
-```
-
-Nothing in this skill watches for those emails. The format exists so that something else can — a scheduled agent searching Gmail on `subject:"Feedback: platform-tech-approach"` finds every submission with no ambiguity. Where that watcher lives is a separate decision.
-
 **Copy emits Markdown, not JSON.** It reads in a Slack message unaided and parses just as reliably from a fixed grammar. Download emits JSON.
+
+**There is no email button.** A `mailto:` path existed and was removed. It carried no attachments, the OS handoff truncated past roughly 2,048 characters so it disabled itself on any substantial review, it was dead on a machine with no mail client configured, and it was the only part of the component needing a per-installation address — which meant an example address in this file, which meant that address getting copied into artifacts by whoever installed the skill next.
+
+A reviewer who wants to email their feedback copies it and pastes it into their own message, which is what they were doing above the character ceiling anyway.
+
+**The automation hook lives in the body, not the subject.** Every payload carries `schema: gnar.artifact-feedback/1` on line five. A mail search on that string finds every submission and survives a reviewer editing their subject line, which a subject-based hook does not.
 
 ### Markdown grammar
 

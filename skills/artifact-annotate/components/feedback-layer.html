@@ -16,8 +16,6 @@
   "docId": "REPLACE-doc-slug",
   "title": "REPLACE Document Title",
   "revision": "REPLACE-ISO-8601",
-  "to": "REPLACE@gnar.dog",
-  "cc": [],
   "endpoint": null
 }
 </script>
@@ -470,7 +468,6 @@
       <p id="fbk-sheet-sub"></p>
       <div class="fbk-opts" id="fbk-opts">
         <button class="fbk-btn fbk-opt" id="fbk-x-submit" hidden><b>Submit</b><small>Sends directly. Nothing else to do.</small></button>
-        <button class="fbk-btn fbk-opt" id="fbk-x-mail"><b>Email it</b><small id="fbk-mail-note">Opens your mail client with everything filled in. Send it as-is.</small></button>
         <button class="fbk-btn fbk-opt" id="fbk-x-copy"><b>Copy to clipboard</b><small>Paste into Slack, email, or anywhere else.</small></button>
         <button class="fbk-btn fbk-opt" id="fbk-x-file"><b>Download a file</b><small>Send the .json file back however you like.</small></button>
       </div>
@@ -484,7 +481,6 @@
 (function () {
   'use strict';
 
-  var MAILTO_MAX = 1900; // OS handoff to the mail client truncates past ~2048.
   var KINDS = ['blocking', 'suggestion', 'question'];
 
   function readJSON(id) {
@@ -847,16 +843,6 @@
     return String(s || 'reviewer').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
-  function subject() {
-    return 'Feedback: ' + CFG.docId + ' ' + CFG.revision + ' — ' + (state.reviewer.name || 'Unnamed reviewer');
-  }
-
-  function mailtoURL() {
-    var q = 'subject=' + encodeURIComponent(subject()) + '&body=' + encodeURIComponent(markdown());
-    if (CFG.cc && CFG.cc.length) q += '&cc=' + encodeURIComponent(CFG.cc.join(','));
-    return 'mailto:' + encodeURIComponent(CFG.to || '') + '?' + q;
-  }
-
   function done(msg) {
     $('fbk-status').textContent = msg;
     state.dirty = false;
@@ -876,14 +862,6 @@
     $('fbk-sheet-sub').textContent = state.comments.length +
       ' comment' + (state.comments.length === 1 ? '' : 's') + ' on ' + (CFG.title || 'this document') + '.';
     $('fbk-x-submit').hidden = !CFG.endpoint;
-
-    var url = mailtoURL();
-    var tooLong = url.length > MAILTO_MAX;
-    $('fbk-x-mail').disabled = tooLong;
-    $('fbk-mail-note').textContent = tooLong
-      ? 'Too long to email directly — mail clients truncate it. Copy or download instead.'
-      : 'Opens your mail client with everything filled in. Send it as-is.';
-
     scrim.classList.add('fbk-open');
   }
 
@@ -920,11 +898,6 @@
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
     done('Downloaded. Send the file back however you like.');
-  });
-
-  $('fbk-x-mail').addEventListener('click', function () {
-    location.href = mailtoURL();
-    done('Your mail client should be open. Send it as-is — no editing needed.');
   });
 
   $('fbk-x-submit').addEventListener('click', function () {
