@@ -38,27 +38,26 @@
     --fbk-bg: #ffffff;
     --fbk-bg2: #f4f4f5;
     --fbk-bd: rgba(0, 0, 0, 0.14);
-    /* Immerse coral. The brand value #FA5539 gives white text 3.3:1 and reads
-       at 3.25:1 as text on a light ground, so light mode takes the deeper
-       #D84025 — which clears 4.5:1 in both directions — and dark mode takes
-       the bright value against its own ground. Filled buttons carrying white
-       text always use --fbk-accent-ink. */
-    --fbk-accent: #D84025;
+    /* Hot Slate — see docs/reference/hot-slate.md for the palette, the
+       contrast table, and the techniques. Ramp stops clear 3:1 on both
+       grounds so they need no theme split; only the solid accent does. */
+    --fbk-heat-0: #6B7285;
+    --fbk-heat-1: #B04A3A;
+    --fbk-heat-2: #C27620;
+    --fbk-accent: #B04A3A;
+    --fbk-ink-0: #C1341F;
     --fbk-accent-ink: #D84025;
     --fbk-block: var(--fbk-accent);
     --fbk-sugg: #6a5a1f;
     --fbk-ques: #1f5a5a;
     --fbk-shadow: rgba(0, 0, 0, 0.16);
-    /* Markers follow the component's own primary — the same coral as Review
-       and Send — so the tooling reads as one system regardless of what the
-       deliverable's palette is doing. Override this token alone to recolour
-       markers, cursor, and glow together. */
     --fbk-pin: var(--fbk-accent);
-    /* Same bubble as the pin — circle with a squared bottom-left corner, and
-       that corner is the hotspot, so the cursor points at what it will anchor
-       to. Data URI keeps it inside the CSP; a data URI cannot read a custom
-       property, so this hex is --fbk-accent written out and has to move with it. */
-    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23ffffff' stroke='%23D84025' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+    /* Same bubble as the marker — circle with a squared bottom-left corner,
+       and that corner is the hotspot, so the cursor points at what it will
+       anchor to. Data URI keeps it inside the CSP; a data URI cannot read a
+       custom property or a gradient, so the stroke is --fbk-accent written
+       out as a literal and has to move with it. */
+    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23ffffff' stroke='%23B04A3A' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -67,14 +66,18 @@
       --fbk-bg: #171717;
       --fbk-bg2: #232323;
       --fbk-bd: rgba(255, 255, 255, 0.16);
-      --fbk-accent: #FA5539;
+      --fbk-heat-0: #6B7285;
+      --fbk-heat-1: #B04A3A;
+      --fbk-heat-2: #C27620;
+      --fbk-accent: #D06A55;
+      --fbk-ink-0: #C1341F;
       --fbk-accent-ink: #D84025;
       --fbk-block: var(--fbk-accent);
       --fbk-sugg: #cfb85e;
       --fbk-ques: #6fbdbd;
       --fbk-shadow: rgba(0, 0, 0, 0.5);
       --fbk-pin: var(--fbk-accent);
-      --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23FA5539' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+      --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23D06A55' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
     }
   }
   :root[data-theme="dark"] {
@@ -83,14 +86,18 @@
     --fbk-bg: #171717;
     --fbk-bg2: #232323;
     --fbk-bd: rgba(255, 255, 255, 0.16);
-    --fbk-accent: #FA5539;
+    --fbk-heat-0: #6B7285;
+    --fbk-heat-1: #B04A3A;
+    --fbk-heat-2: #C27620;
+    --fbk-accent: #D06A55;
+    --fbk-ink-0: #C1341F;
     --fbk-accent-ink: #D84025;
     --fbk-block: var(--fbk-accent);
     --fbk-sugg: #cfb85e;
     --fbk-ques: #6fbdbd;
     --fbk-shadow: rgba(0, 0, 0, 0.5);
     --fbk-pin: var(--fbk-accent);
-    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23FA5539' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
+    --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23D06A55' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
   }
 
   .fbk-root, .fbk-root * { box-sizing: border-box; }
@@ -122,8 +129,14 @@
   .fbk-btn:hover { border-color: var(--fbk-accent); }
   .fbk-btn:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
   .fbk-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-  /* White text sits on this fill, so it takes the deeper coral in both themes. */
-  .fbk-btn--primary { background: var(--fbk-accent-ink); border-color: var(--fbk-accent-ink); color: #fff; }
+  /* White text sits on this fill, so it stops at --fbk-accent-ink in both
+     themes — the lightest warm value that holds 4.5:1. The short gradient
+     reads as a lit surface without leaving that budget. */
+  .fbk-btn--primary {
+    background: linear-gradient(160deg, var(--fbk-ink-0), var(--fbk-accent-ink));
+    border-color: var(--fbk-accent-ink);
+    color: #fff;
+  }
 
   /* ── control bar ───────────────────────────────────────────── */
   .fbk-bar {
@@ -171,14 +184,25 @@
 
   /* The anchored block stays lit while its comments are open, in or out of
      review mode — a comment with no visible subject is hard to act on. */
+  /* Solid outline, ramp wash. The wash is transparent so the block's own
+     content reads through it. The ring stays an `outline` rather than a
+     masked ::before because this class lands on the deliverable's elements,
+     and claiming their ::before would clobber whatever the page put there. */
   [data-cid].fbk-active {
     outline: 2px solid var(--fbk-accent);
     outline-offset: 4px;
     border-radius: 2px;
-    background: color-mix(in srgb, var(--fbk-accent) 9%, transparent);
+    background: linear-gradient(120deg,
+      color-mix(in srgb, var(--fbk-heat-0) 15%, transparent),
+      color-mix(in srgb, var(--fbk-heat-1) 13%, transparent),
+      color-mix(in srgb, var(--fbk-heat-2) 13%, transparent));
+    background: linear-gradient(120deg in oklab,
+      color-mix(in srgb, var(--fbk-heat-0) 15%, transparent),
+      color-mix(in srgb, var(--fbk-heat-1) 13%, transparent),
+      color-mix(in srgb, var(--fbk-heat-2) 13%, transparent));
   }
   @keyframes fbk-flash {
-    from { background: color-mix(in srgb, var(--fbk-accent) 28%, transparent); }
+    from { background: color-mix(in srgb, var(--fbk-heat-1) 30%, transparent); }
   }
   [data-cid].fbk-flash { animation: fbk-flash 900ms ease-out; }
   @media (prefers-reduced-motion: reduce) { [data-cid].fbk-flash { animation: none; } }
@@ -195,37 +219,45 @@
     min-width: 28px;
     height: 28px;
     padding: 0 8px;
-    border: 2px solid var(--fbk-pin);
+    border: 2px solid transparent;
     border-radius: 999px 999px 999px 5px;
-    background: var(--fbk-bg);
+    /* Ramp ring, opaque interior. Safe to use the two-layer background here
+       — unlike the region highlight, this is the component's own element and
+       its middle is meant to be solid. */
+    background:
+      linear-gradient(var(--fbk-bg), var(--fbk-bg)) padding-box,
+      linear-gradient(140deg, var(--fbk-heat-0), var(--fbk-heat-1), var(--fbk-heat-2)) border-box;
+    background:
+      linear-gradient(var(--fbk-bg), var(--fbk-bg)) padding-box,
+      linear-gradient(140deg in oklab, var(--fbk-heat-0), var(--fbk-heat-1), var(--fbk-heat-2)) border-box;
     /* Four stacked shadows read as one gradient bloom — a tight halo fading
        out through two wider passes, plus the neutral drop underneath. They
        follow border-radius, so the glow takes the bubble's squared corner. */
     box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--fbk-pin) 22%, transparent),
-      0 3px 10px color-mix(in srgb, var(--fbk-pin) 50%, transparent),
-      0 6px 22px color-mix(in srgb, var(--fbk-pin) 30%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--fbk-heat-1) 22%, transparent),
+      0 3px 10px color-mix(in srgb, var(--fbk-heat-1) 50%, transparent),
+      0 6px 22px color-mix(in srgb, var(--fbk-heat-2) 32%, transparent),
       0 2px 8px var(--fbk-shadow);
     font: 700 13px/1 ui-sans-serif, system-ui, sans-serif;
-    color: var(--fbk-pin);
+    color: var(--fbk-accent);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
-    transition: transform 120ms ease, background-color 120ms ease, box-shadow 160ms ease;
+    transition: transform 120ms ease, box-shadow 160ms ease;
   }
   .fbk-pin:hover {
     transform: scale(1.08);
-    background: var(--fbk-bg2);
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--fbk-pin) 30%, transparent),
-      0 4px 14px color-mix(in srgb, var(--fbk-pin) 62%, transparent),
-      0 8px 30px color-mix(in srgb, var(--fbk-pin) 40%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--fbk-heat-1) 30%, transparent),
+      0 4px 14px color-mix(in srgb, var(--fbk-heat-1) 62%, transparent),
+      0 8px 30px color-mix(in srgb, var(--fbk-heat-2) 44%, transparent),
       0 2px 8px var(--fbk-shadow);
   }
-  .fbk-pin:focus-visible { outline: 2px solid var(--fbk-pin); outline-offset: 2px; }
+  .fbk-pin:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 2px; }
   /* A response marker carries no new comment of the reader's, so it stays
-     quiet — same shape, no glow, borrowed border, muted number. */
+     quiet — same shape, no ramp, no glow, muted number. */
   .fbk-pin--resp {
     border-color: var(--fbk-bd);
+    background: var(--fbk-bg);
     color: var(--fbk-dim);
     box-shadow: 0 2px 8px var(--fbk-shadow);
   }
@@ -254,12 +286,24 @@
   }
 
   .fbk-phead {
+    position: relative;
     flex: none;
     display: flex;
     align-items: center;
     gap: 9px;
     padding: 14px 14px 12px 16px;
-    border-bottom: 1px solid var(--fbk-bd);
+  }
+  /* Ramp rule under the panel header — the one place the gradient runs at
+     full length in the chrome. */
+  .fbk-phead::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--fbk-heat-0), var(--fbk-heat-1), var(--fbk-heat-2));
+    background: linear-gradient(90deg in oklab, var(--fbk-heat-0), var(--fbk-heat-1), var(--fbk-heat-2));
   }
   .fbk-phead h3 { margin: 0; font-size: 14px; font-weight: 600; }
   .fbk-pcount {
