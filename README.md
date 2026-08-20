@@ -84,6 +84,7 @@ Tools for exploring problems and building clarity. Primarily for human-paired wo
 - **`/reasoning`** — Extract truths, conditionals, and a directional vector from complex problems.
 - **`/terse`** — Respond in terse bullet form; bare `/terse` resynthesizes the previous response for quick scanning.
 - **`/elif`** — Explain Like I'm Five: plain-vocabulary explanation pitched at a capable reader outside their domain, with every fact and identifier intact; bare `/elif` re-explains the previous response.
+- **`/tea`** — Terse, ELIF, Artifact composed onto a published page. `/tea <concept>` (or bare, on the current thread) explains a subject in plain words; `/tea <project>` fans out research agents across Circleback, Slack, Runn, Gmail, Drive, and delivery artifacts, then reports the engagement's health and what needs the reader. Comments on the page feed `/triage`.
 
 ### Author
 
@@ -183,7 +184,19 @@ Do not install the plugin on a machine that ran `setup.sh` — skills, agents, a
 
 ### Versioning
 
-`plugin.json` deliberately omits `version`. The plugin's version resolves to the commit SHA instead, so a push to `main` reaches every install on the next update — no manual version bump. Adding a `version` field would pin installs until it is bumped.
+`plugin.json` carries a semver `version`, starting at `0.1.0`. Installs pin to it: a machine running `0.1.0` stays on `0.1.0` until the field is bumped and pushed, even if `main` has moved. **A change that ships to other installs needs a bump in the same commit.**
+
+The `0.x` series says the harness still churns — skills get renamed and rules get rewritten without ceremony. While the major stays at `0`, breaking changes ride the minor.
+
+| Change | Bump |
+|---|---|
+| Removing or renaming a skill, agent, or slash command; anything that breaks a caller | Minor — `0.1.0` → `0.2.0` |
+| New skill or agent; a new capability in an existing one | Minor — `0.1.0` → `0.2.0` |
+| Wording, rules, or fixes inside an existing skill | Patch — `0.1.0` → `0.1.1` |
+
+Docs-only edits that don't ship behavior (this README, `retros/`, `docs/`) need no bump.
+
+This replaces the earlier SHA-tracking setup, where the omitted `version` let a push to `main` reach every install on the next update. The bump is manual now; a stable number is what peers report bugs against and what identifies which account runs what.
 
 ### Global instructions
 
@@ -195,7 +208,7 @@ Do not install the plugin on a machine that ran `setup.sh` — skills, agents, a
 claude plugin validate .
 ```
 
-Reports one warning about the missing `version`, which is intentional. Any other warning is a real problem.
+Expect a clean report. Any warning is a real problem.
 
 ---
 
