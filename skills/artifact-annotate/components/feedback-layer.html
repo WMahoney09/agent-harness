@@ -47,9 +47,10 @@
     --fbk-accent: #B04A3A;
     --fbk-ink-0: #C1341F;
     --fbk-accent-ink: #D84025;
+    --fbk-warm-ink: #B05F16;
     --fbk-block: var(--fbk-accent);
-    --fbk-sugg: #6a5a1f;
-    --fbk-ques: #1f5a5a;
+    --fbk-sugg: #A85A15;
+    --fbk-ques: #5F667A;
     --fbk-shadow: rgba(0, 0, 0, 0.16);
     --fbk-pin: var(--fbk-accent);
     /* Same bubble as the marker — circle with a squared bottom-left corner,
@@ -72,9 +73,10 @@
       --fbk-accent: #D06A55;
       --fbk-ink-0: #C1341F;
       --fbk-accent-ink: #D84025;
+      --fbk-warm-ink: #B05F16;
       --fbk-block: var(--fbk-accent);
-      --fbk-sugg: #cfb85e;
-      --fbk-ques: #6fbdbd;
+      --fbk-sugg: #C27620;
+      --fbk-ques: #8B93A6;
       --fbk-shadow: rgba(0, 0, 0, 0.5);
       --fbk-pin: var(--fbk-accent);
       --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23D06A55' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
@@ -92,9 +94,10 @@
     --fbk-accent: #D06A55;
     --fbk-ink-0: #C1341F;
     --fbk-accent-ink: #D84025;
+    --fbk-warm-ink: #B05F16;
     --fbk-block: var(--fbk-accent);
-    --fbk-sugg: #cfb85e;
-    --fbk-ques: #6fbdbd;
+    --fbk-sugg: #C27620;
+    --fbk-ques: #8B93A6;
     --fbk-shadow: rgba(0, 0, 0, 0.5);
     --fbk-pin: var(--fbk-accent);
     --fbk-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V12A8 8 0 1 1 12 20H4Z' fill='%23171717' stroke='%23D06A55' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 4 20, pointer;
@@ -129,12 +132,13 @@
   .fbk-btn:hover { border-color: var(--fbk-accent); }
   .fbk-btn:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
   .fbk-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-  /* White text sits on this fill, so it stops at --fbk-accent-ink in both
-     themes — the lightest warm value that holds 4.5:1. The short gradient
-     reads as a lit surface without leaving that budget. */
+  /* Send feedback — the hot end of the ramp. White text needs 4.5:1, and
+     #C27620 only reaches 3.6, so any filled control terminates at
+     --fbk-warm-ink instead: the same amber pulled down to 4.65. */
   .fbk-btn--primary {
-    background: linear-gradient(160deg, var(--fbk-ink-0), var(--fbk-accent-ink));
-    border-color: var(--fbk-accent-ink);
+    background: linear-gradient(135deg, var(--fbk-ink-0), var(--fbk-warm-ink));
+    background: linear-gradient(135deg in oklab, var(--fbk-ink-0), var(--fbk-warm-ink));
+    border-color: var(--fbk-ink-0);
     color: #fff;
   }
 
@@ -168,7 +172,14 @@
   }
   .fbk-count:hover { color: var(--fbk-fg); background: var(--fbk-bg2); }
   .fbk-count:focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
-  .fbk-bar [aria-pressed="true"] { background: var(--fbk-accent-ink); border-color: var(--fbk-accent-ink); color: #fff; }
+  /* Reviewing — the same ramp skewed cool, so the mode toggle and the send
+     action read as the same system at different temperatures. */
+  .fbk-bar [aria-pressed="true"] {
+    background: linear-gradient(135deg, var(--fbk-heat-0), var(--fbk-heat-1));
+    background: linear-gradient(135deg in oklab, var(--fbk-heat-0), var(--fbk-heat-1));
+    border-color: var(--fbk-heat-0);
+    color: #fff;
+  }
 
   /* ── block affordances ─────────────────────────────────────── */
   [data-cid] { position: relative; }
@@ -187,8 +198,12 @@
   /* Solid outline, ramp wash. The wash is transparent so the block's own
      content reads through it. The ring stays an `outline` rather than a
      masked ::before because this class lands on the deliverable's elements,
-     and claiming their ::before would clobber whatever the page put there. */
-  [data-cid].fbk-active {
+     and claiming their ::before would clobber whatever the page put there.
+
+     Gated on the panel being open. With the panel closed the deliverable
+     goes back to reading as itself — markers stay, so a reader can still see
+     where the comments are, but nothing is washed or ringed. */
+  .fbk-panel-open [data-cid].fbk-active {
     outline: 2px solid var(--fbk-accent);
     outline-offset: 4px;
     border-radius: 2px;
@@ -204,7 +219,7 @@
   @keyframes fbk-flash {
     from { background: color-mix(in srgb, var(--fbk-heat-1) 30%, transparent); }
   }
-  [data-cid].fbk-flash { animation: fbk-flash 900ms ease-out; }
+  .fbk-panel-open [data-cid].fbk-flash { animation: fbk-flash 900ms ease-out; }
   @media (prefers-reduced-motion: reduce) { [data-cid].fbk-flash { animation: none; } }
 
   /* Speech-bubble marker: a circle with one squared corner, pointing back
@@ -368,25 +383,27 @@
   textarea.fbk-field { min-height: 68px; resize: vertical; }
   .fbk-kinds { display: flex; gap: 5px; margin-bottom: 8px; }
   .fbk-kinds .fbk-btn { flex: 1; text-align: center; padding: 5px 0; font-size: 11px; }
-  /* Selected state carries the kind's own colour, so the choice reads as the
-     same thing the comment will be labelled. Attribute selector outranks the
-     :hover border rule above. */
+  /* Each kind is a narrow band of the ramp, so the three selectors read as
+     positions on one scale rather than three unrelated colours: blocking at
+     the middle, suggestion at the warm end, question at the cool end. Bands
+     are held to white-text luminance — the true amber #C27620 is 3.6:1, so
+     the suggestion band lands on --fbk-warm-ink. */
   .fbk-kinds .fbk-btn[aria-pressed="true"] {
-    border-color: currentColor;
-    box-shadow: inset 0 0 0 1px currentColor;
+    border-color: transparent;
+    color: #fff;
     font-weight: 600;
   }
   .fbk-kinds .fbk-btn[data-kind="blocking"][aria-pressed="true"] {
-    color: var(--fbk-block);
-    background: color-mix(in srgb, var(--fbk-block) 14%, var(--fbk-bg2));
+    background: linear-gradient(135deg, #A8443A, #BE5040);
+    background: linear-gradient(135deg in oklab, #A8443A, #BE5040);
   }
   .fbk-kinds .fbk-btn[data-kind="suggestion"][aria-pressed="true"] {
-    color: var(--fbk-sugg);
-    background: color-mix(in srgb, var(--fbk-sugg) 14%, var(--fbk-bg2));
+    background: linear-gradient(135deg, #A85A15, #B86518);
+    background: linear-gradient(135deg in oklab, #A85A15, #B86518);
   }
   .fbk-kinds .fbk-btn[data-kind="question"][aria-pressed="true"] {
-    color: var(--fbk-ques);
-    background: color-mix(in srgb, var(--fbk-ques) 14%, var(--fbk-bg2));
+    background: linear-gradient(135deg, #5F667A, #6E7589);
+    background: linear-gradient(135deg in oklab, #5F667A, #6E7589);
   }
 
   .fbk-pfoot { flex: none; display: flex; gap: 6px; padding: 12px 14px; border-top: 1px solid var(--fbk-bd); }
@@ -559,6 +576,9 @@
     document.body.classList.toggle('fbk-panel-open', on);
     bar.count.setAttribute('aria-expanded', String(on));
     if (on) renderList();
+    // Closing the panel returns the deliverable to its own appearance, so the
+    // selection goes with it rather than lingering invisibly.
+    else deselect();
   }
 
   function renderPins() {
