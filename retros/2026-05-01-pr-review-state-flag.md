@@ -1,13 +1,13 @@
 # Retro: agent published a `--request-changes` review on Will's account
 
 **Date:** 2026-05-01
-**Trigger:** During a PR 305 review on `Smartphones-Plus/smartphones-plus-monorepo`, the agent posted via `gh pr review --request-changes` instead of comment-mode.
+**Trigger:** During a review of a client pull request, the agent posted via `gh pr review --request-changes` instead of comment-mode.
 **Status:** Resolved (review dismissed by Will; harness updated).
 
 ## What happened
 
-1. Will asked the agent to review PR 305 in plain English ("publish your review").
-2. The agent ran `gh pr review 305 --request-changes --body-file /tmp/review.md`.
+1. Will asked the agent to review the PR in plain English ("publish your review").
+2. The agent ran `gh pr review <N> --request-changes --body-file /tmp/review.md`.
 3. Will pointed out that the Publish Review skill is unambiguous — comment-mode only, never approve, never request-changes.
 4. The agent attempted to dismiss-and-re-post; Will stopped it (already dismissed) and called a retro.
 
@@ -35,9 +35,9 @@ Two layers, both contributing:
 
 | Input command | Expected | Got |
 | --- | --- | --- |
-| `gh pr review 305 --request-changes --body-file /tmp/r.md` | block (exit 2) | block ✓ |
-| `gh pr review 305 --comment --body-file /tmp/r.md` | allow (exit 0) | allow ✓ |
-| `gh pr view 305` | allow (exit 0) | allow ✓ |
+| `gh pr review <N> --request-changes --body-file /tmp/r.md` | block (exit 2) | block ✓ |
+| `gh pr review <N> --comment --body-file /tmp/r.md` | allow (exit 0) | allow ✓ |
+| `gh pr view <N>` | allow (exit 0) | allow ✓ |
 | `gh api -X POST /repos/o/r/pulls/1/reviews -f event=APPROVE -f body=lgtm` | block (exit 2) | block ✓ |
 
 ## Open / future improvements

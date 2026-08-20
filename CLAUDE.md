@@ -80,10 +80,9 @@ Examples drawn from real work are the best examples — keep drawing them, and s
 
 Applies to: client and prospect names, project code names, client-domain email addresses, client repository and Bitbucket paths, and document titles that carry any of those. Also to real people outside Gnar. Not to Gnar's own name.
 
-Two exemptions, both deliberate:
+**`retros/` are not exempt.** They are tracked and public like every other file here. A retro exists to record what went wrong and what the harness now does about it, and "during a review of a client pull request" carries that as well as a repo path and a PR number did. Keep the mechanics and the reasoning; drop the identity.
 
-- **`retros/`** — a decision log where the real trigger is the record. A retro that genericizes its own cause stops explaining why the harness looks the way it does.
-- **The GitHub Identity block in `user/CLAUDE.md`** — the org list is how an agent resolves `{owner}` for `gh` commands, so it is configuration rather than an example.
+No exemptions. Where an agent genuinely needs the information, fetch it at runtime rather than committing it — the GitHub Identity block in `user/CLAUDE.md` lists no orgs and points at `gh api user/orgs` instead.
 
 Before committing a skill or doc change, grep the diff for the names of current engagements. A name that ships cannot be recalled by editing the working tree.
 

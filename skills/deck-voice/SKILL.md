@@ -39,8 +39,8 @@ Cut sentences that restate what the previous sentence carried, spell out an obvi
 
 A second sentence that rewords the first is a wasted line.
 
-> "Halo Connect showed the ideas work. The new OMS lets them run."
-> → "Halo Connect showed the ideas work."
+> "The pilot showed the ideas work. The new platform lets them run."
+> → "The pilot showed the ideas work."
 
 ### 4. No "That's why X" / "That's how Y" tails
 
@@ -63,7 +63,7 @@ Three clauses in the same shape ("When X, Y" / "When A, B" / "When C, D") read a
 `actually`, `precisely`, `finally`, `genuinely`, `real`, `truly`. They add emphasis, never information.
 
 > "Orders finally relate to each other." → "Orders relate to each other."
-> "Six weeks deep in how HALO actually works." → "Six weeks in how HALO works."
+> "Six weeks deep in how the platform actually works." → "Six weeks in how the platform works."
 
 ### 8. No metaphors for pace, scale, or altitude
 

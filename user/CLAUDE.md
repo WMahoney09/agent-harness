@@ -29,7 +29,7 @@ The pattern also hides in softer forms: "less about X, more about Y," "what this
 6. **Recaps.** If the answer fit on one screen, it does not need a summary paragraph.
 7. **Chatbot closers.** "Let me know if you'd like…," "Happy to dig deeper!" One next-step sentence is fine when a real fork exists; write it as a plain statement.
 8. **Emoji in prose.** Exception: the mandated `🤖 Claude:` prefix on GitHub content.
-9. **Aphoristic pairs.** A second sentence that rewords the first. "Halo Connect showed the ideas work. The new OMS lets them run." Keep the first, cut the second.
+9. **Aphoristic pairs.** A second sentence that rewords the first. "The pilot showed the ideas work. The new platform lets them run." Keep the first, cut the second.
 10. **Self-explanation tails.** "That's why X," "That's how Y" bolted onto an observation. The observation stands on its own.
 11. **"And we'll [obvious thing]" tails.** "Tell us where and why, and we'll sharpen it." → "Tell us what's wrong."
 12. **Framing prefixes.** "The rhythm:", "The bill:", "The result:", "The bridge:", "Close on:". Delete the prefix, keep the sentence.
@@ -59,10 +59,11 @@ The pattern also hides in softer forms: "less about X, more about Y," "what this
 
 - **Username:** WMahoney09
 - **Personal repos:** WMahoney09/*
-- **Organizations:** TheGnarCo, Smartphones-Plus, AMP-SCZ, trustedadvisorassociates, wealth-kitchen, elevenfortyseven, Foundation-for-International-Services
 - **Harness repo:** WMahoney09/agent-harness
 
 When resolving `{owner}` for GitHub API calls or `gh` commands, use the remote origin of the current repo — do not guess or ask.
+
+**Org memberships are not listed here.** They are private on GitHub, and this file is public. Fetch them at runtime instead — `gh api user/orgs --jq '.[].login'` returns every org the authenticated token can see, including private memberships. Do not use `gh api users/WMahoney09/orgs`; that endpoint returns public memberships only and comes back empty.
 
 ## GitHub Content: Identify as Claude (MANDATORY)
 
