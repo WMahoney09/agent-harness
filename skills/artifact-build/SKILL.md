@@ -106,6 +106,8 @@ Follow the plan you wrote. If you find yourself deviating, revise the plan first
 
 A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen. The format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`.
 
+**A container of peers is never the anchor — each peer is.** A row of cards, a list of items, a set of numbered principles: the cid goes on every card, never on the grid that holds them. Anchor the container and a reviewer commenting on the third card selects all three and gets it labelled with the first one's heading. This is the granularity mistake that actually happens, and numbered peers make it plain in the export — a comment on `02` recorded against `01`.
+
 `artifact-draft` owns the rule and the stability discipline; this skill applies it unconditionally. It costs a few tokens per block and no thought, and it is the one property that is expensive to retrofit — an artifact carrying cids can accept feedback later by any route and still resolve anchors.
 
 **Paste the components in, last, verbatim.** Theme control, then the view router if the deliverable spans views, then `artifact-draft`'s feedback layer if step 2 called for it.
@@ -122,7 +124,7 @@ Walk it. Every item, every time — including redeploys.
 
 **Theme control.** Present and working in all three states — `○` light, `◐` auto, `●` dark. Toggling to each one and back must change the page, which is the fastest way to catch a token defined in only one block.
 
-**Anchors.** Every block a reader would comment on carries `data-cid`. On a redeploy, spot-check that surviving blocks kept the ids they had, or any feedback already in hand is orphaned.
+**Anchors.** Every block a reader would comment on carries `data-cid`. Walk the page for containers of peers — card rows, item lists, numbered sets — and confirm the cid is on each peer rather than the container. On a redeploy, spot-check that surviving blocks kept the ids they had, or any feedback already in hand is orphaned.
 
 **Views.** On a multi-view file: every nav link resolves, deep links open the right view and scroll, the back button works, and printing shows all views rather than one.
 
@@ -182,7 +184,7 @@ No co-located `ARTIFACT.md` exists for this skill, deliberately. A fixed output 
 - [ ] Structural devices encode real information; nothing is numbered that isn't a sequence or a rank
 - [ ] Both themes verified; no color defined only inside a media or `[data-theme]` block
 - [ ] Theme control pasted in and cycles through `○ ◐ ●` correctly
-- [ ] Every commentable block carries `data-cid`; ids preserved on a redeploy
+- [ ] Every commentable block carries `data-cid`; peers anchored individually, never their container; ids preserved on a redeploy
 - [ ] Multi-view deliverables use hash routing in one file; nav, deep links, back button, and print all verified
 - [ ] Draft or final was answered explicitly — asked when unclear, never guessed
 - [ ] `artifact-draft` loaded when the answer was yes

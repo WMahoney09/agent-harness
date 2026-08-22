@@ -15,6 +15,12 @@ A fixed, versioned block pasted into an artifact verbatim. It is a utility, not 
 
 A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen.
 
+**A container of peers is never the anchor — each peer is.** A row of cards, a list of items, a set of tiers, a grid of principles: the cid goes on every card, not on the grid. Anchoring the container means a reviewer commenting on the third card selects all three, and the comment comes back labelled with the first one's heading. Numbered peers make this obvious in the export: a comment on `02` recorded against `01`.
+
+If a container is *also* worth commenting on as a whole, give it a cid too. Nesting is fine — the layer anchors to the innermost `[data-cid]` under the click, so the peers win when a reviewer clicks one and the container catches clicks in the gaps.
+
+The component degrades when this rule is missed: heading and quote come from the child of the block the reviewer actually clicked, so a coarse anchor at least records the right card. The `cid` is still the container's, so the highlight and the resolved anchor stay coarse. Anchor the peers.
+
 **Never put `data-cid` on a `<table>`, `<thead>`, `<tbody>`, `<tr>`, or `<td>`.** The layer appends its marker as a child of the anchored element, and a `<button>` inside table markup renders badly. Put it on the `overflow-x: auto` wrapper the table already needs — which is also the thing a reader means when they comment on "the table."
 
 Format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`. In a multi-view file the heading slug picks up the view name on its own — `typography-scale-2` — so ids stay unique file-wide with no extra rule.
@@ -85,6 +91,30 @@ Fill in `#feedback-config` and nothing else:
 **No address is configured, deliberately.** Nothing in the component knows where feedback should go, so nothing about where it should go ships inside a file handed to a client. A reviewer sends their export wherever the covering message told them to.
 
 A multi-view deliverable is one file and therefore one `docId`, one storage bucket, and one submission covering every view.
+
+---
+
+## The reviewer name is optional
+
+Asked once, in the send sheet, and nowhere else. A reviewer who leaves it blank still gets their feedback out; the record carries `Unnamed reviewer` and `verified: false`.
+
+The name belongs to the submission, not to any one comment. It used to sit above the comment box, which asked for it at the worst moment — while the reviewer was mid-thought about a paragraph — and it doubled as a gate: clicking Send with no name bounced them back to that field instead of opening the sheet, with nothing explaining why. That reads as a broken button, and on a client-facing page a broken button costs a round of feedback rather than a name.
+
+Now the reviewer writes every comment they have, hits Send, and gives their name on the way out. Typing it in the sheet writes through to `state.reviewer`, so every export path picks it up: copy, download, and direct submit all build from the same record.
+
+---
+
+## Keyboard
+
+| Key | Where | Does |
+|---|---|---|
+| `⌘ + Enter` / `Ctrl + Enter` | Comment box | Adds the comment |
+| `Enter` | Comment box | Newline |
+| `Escape` | Anywhere | Closes the send sheet, then deselects the block, then closes the panel |
+
+**Plain `Enter` stays a newline, deliberately.** Review comments routinely run to several sentences, and submit-on-Enter fires halfway through one with no way to get the text back. The cost of the wrong default falls on the reviewer, who is usually a client, and it costs them the thought they were mid-way through writing.
+
+The Add button carries the shortcut in its `title` and in `aria-keyshortcuts`, switched to `Ctrl` off Mac. There is no visible hint — the button sits directly under the box and the shortcut is the convention everywhere else a comment box appears.
 
 ---
 

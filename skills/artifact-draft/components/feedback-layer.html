@@ -447,7 +447,6 @@
 
     <div class="fbk-compose">
       <p class="fbk-ctx" id="fbk-ctx">Click any part of the document to comment on it.</p>
-      <input class="fbk-field" id="fbk-name" placeholder="Your name" autocomplete="name" hidden>
       <div class="fbk-kinds" role="group" aria-label="Comment type">
         <button class="fbk-btn" data-kind="blocking" aria-pressed="false">Blocking</button>
         <button class="fbk-btn" data-kind="suggestion" aria-pressed="true">Suggestion</button>
@@ -466,6 +465,7 @@
     <div class="fbk-sheet" role="dialog" aria-modal="true" aria-labelledby="fbk-sheet-h">
       <h3 id="fbk-sheet-h">Send your feedback</h3>
       <p id="fbk-sheet-sub"></p>
+      <input class="fbk-field" id="fbk-x-name" placeholder="Your name (optional)" autocomplete="name">
       <div class="fbk-opts" id="fbk-opts">
         <button class="fbk-btn fbk-opt" id="fbk-x-submit" hidden><b>Submit</b><small>Sends directly. Nothing else to do.</small></button>
         <button class="fbk-btn fbk-opt" id="fbk-x-copy"><b>Copy to clipboard</b><small>Paste into Slack, email, or anywhere else.</small></button>
@@ -528,6 +528,7 @@
   var panel = $('fbk-panel');
   var scrim = $('fbk-scrim');
   var active = null;
+  var activeScope = null;
   var kind = 'suggestion';
 
   // ── anchors ─────────────────────────────────────────────────
@@ -558,6 +559,18 @@
   function quoteFor(el) {
     var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
     return t.length > 120 ? t.slice(0, 120).replace(/\s\S*$/, '') + '…' : t;
+  }
+
+  // The child of the anchored block the reviewer actually clicked. A block
+  // holding a row of cards should have a cid on each card — see the anchor
+  // rule — but when it does not, this keeps the heading and the quote
+  // describing the card the reviewer meant rather than the row's first one.
+  // The cid stays the block's, so ingest is unaffected.
+  function scopeWithin(block, target) {
+    if (!target || target === block || !block.contains(target)) return block;
+    var node = target;
+    while (node && node.parentElement && node.parentElement !== block) node = node.parentElement;
+    return (node && node !== block) ? node : block;
   }
 
   function blocks() { return Array.prototype.slice.call(document.querySelectorAll('[data-cid]')); }
@@ -701,9 +714,10 @@
   }
 
   // ── selection ───────────────────────────────────────────────
-  function select(block) {
+  function select(block, target) {
     if (active) active.classList.remove('fbk-active');
     active = block;
+    activeScope = scopeWithin(block, target);
     active.classList.add('fbk-active');
     showPanel(true);
 
@@ -711,12 +725,11 @@
     ctx.textContent = '';
     ctx.appendChild(document.createTextNode('Commenting on '));
     var b = document.createElement('b');
-    b.textContent = headingFor(block);
+    b.textContent = headingFor(activeScope);
     ctx.appendChild(b);
 
     $('fbk-body').disabled = false;
     $('fbk-add').disabled = false;
-    $('fbk-name').hidden = !!state.reviewer.name;
     renderList();
 
     var first = forCid(block.dataset.cid)[0];
@@ -730,6 +743,7 @@
   function deselect() {
     if (active) active.classList.remove('fbk-active');
     active = null;
+    activeScope = null;
     $('fbk-ctx').textContent = 'Click any part of the document to comment on it.';
     $('fbk-body').disabled = true;
     $('fbk-add').disabled = true;
@@ -774,7 +788,7 @@
     if (!document.body.classList.contains('fbk-on')) return;
     if (e.target.closest('.fbk-root')) return;
     var b = e.target.closest('[data-cid]');
-    if (b) select(b);
+    if (b) select(b, e.target);
   });
 
   document.querySelectorAll('.fbk-kinds .fbk-btn').forEach(function (b) {
@@ -789,22 +803,35 @@
   $('fbk-add').addEventListener('click', function () {
     var text = $('fbk-body').value.trim();
     if (!text || !active) return;
-    var name = $('fbk-name').value.trim();
-    if (name) state.reviewer.name = name;
+    var scope = activeScope || active;
     state.comments.push({
       id: nextId(),
       cid: active.dataset.cid,
-      heading: headingFor(active),
-      quote: quoteFor(active),
+      heading: headingFor(scope),
+      quote: quoteFor(scope),
       body: text,
       kind: kind,
       createdAt: new Date().toISOString()
     });
     state.dirty = true;
     $('fbk-body').value = '';
-    $('fbk-name').hidden = !!state.reviewer.name;
     persist(); renderPins(); renderBar(); renderList();
   });
+
+  // ⌘↵ on a Mac, Ctrl+↵ elsewhere, adds the comment. Plain ↵ stays a
+  // newline: review comments routinely run to several sentences, and
+  // submit-on-Enter loses them mid-thought with no way back.
+  (function () {
+    var mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    var add = $('fbk-add');
+    add.title = (mac ? '⌘' : 'Ctrl') + ' + Enter';
+    add.setAttribute('aria-keyshortcuts', mac ? 'Meta+Enter' : 'Control+Enter');
+    $('fbk-body').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey)) return;
+      e.preventDefault();
+      if (!add.disabled) add.click();
+    });
+  })();
 
   // ── export builders ─────────────────────────────────────────
   function record(transport) {
@@ -852,12 +879,10 @@
   // ── export actions ──────────────────────────────────────────
   function openExport() {
     if (!state.comments.length) return;
-    if (!state.reviewer.name) {
-      showPanel(true);
-      $('fbk-name').hidden = false;
-      $('fbk-name').focus();
-      return;
-    }
+    // The name is optional and asked for here, in the sheet, rather than
+    // gating the send. A reviewer who wants to stay unnamed still gets
+    // their feedback out; record() falls back to 'Unnamed reviewer'.
+    $('fbk-x-name').value = state.reviewer.name || '';
     $('fbk-status').textContent = '';
     $('fbk-sheet-sub').textContent = state.comments.length +
       ' comment' + (state.comments.length === 1 ? '' : 's') + ' on ' + (CFG.title || 'this document') + '.';
@@ -867,6 +892,16 @@
 
   bar.send.addEventListener('click', openExport);
   $('fbk-panel-send').addEventListener('click', openExport);
+
+  // The reviewer name is asked once, here, at send. It belongs to the
+  // submission rather than to any one comment, and asking for it while
+  // someone is mid-thought about a paragraph interrupts the wrong task.
+  // Every export path builds from state.reviewer, so this one input
+  // reaches copy, download, and submit alike.
+  $('fbk-x-name').addEventListener('input', function () {
+    state.reviewer.name = this.value.trim();
+    persist();
+  });
 
   $('fbk-x-close').addEventListener('click', function () { scrim.classList.remove('fbk-open'); });
   scrim.addEventListener('click', function (e) { if (e.target === scrim) scrim.classList.remove('fbk-open'); });

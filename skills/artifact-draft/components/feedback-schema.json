@@ -68,7 +68,7 @@
           },
           "quote": {
             "type": "string",
-            "description": "Leading text of the anchored block, whitespace-collapsed, ~120 chars. Tier-2 anchor when the cid has moved."
+            "description": "Leading text of the region the reviewer clicked, whitespace-collapsed, ~120 chars. Usually the whole anchored block; narrower when the block holds peers that were not anchored individually. Tier-2 anchor when the cid has moved."
           },
           "body": { "type": "string" },
           "kind": { "enum": ["blocking", "suggestion", "question"] },
