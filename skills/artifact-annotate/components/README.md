@@ -13,13 +13,29 @@ A fixed, versioned block pasted into an artifact verbatim. It is a utility, not 
 
 **Every commentable block carries `data-cid`, on every artifact, whether or not the feedback layer ships with it.** `artifact-build` applies the rule as part of every build; this skill defines it.
 
-A commentable block is one a reader would have an opinion about — a paragraph, a card, a table, a milestone, a diagram. Not every `<div>`. Sixty comment targets on a page is worse than fifteen.
+**Anchor what the reader can point at.** If someone can put a finger on the screen and call it one thing, it carries a cid. Every paragraph. Every card in a row. Every list item carrying a claim. Every table wrapper, diagram, callout, and heading group.
+
+**The ceiling is visual identity**, and it is what keeps a page from filling with targets. A `<span>` mid-sentence is not something a reader points at. Neither is a layout wrapper with no appearance of its own, nor anything hidden. Those get nothing, and anchoring them produces outlines that appear over nothing and comments nobody can place.
+
+**Density is not the problem it looks like.** A page of forty paragraphs needs forty anchors. A reviewer who wants to argue with the third paragraph and can only reach the section around it will either write "in the second section, the bit about X" or say nothing at all — and the second happens more often. The count that matters is how precisely a comment lands, not how few outlines exist.
 
 **A container of peers is never the anchor — each peer is.** A row of cards, a list of items, a set of tiers, a grid of principles: the cid goes on every card, not on the grid. Anchoring the container means a reviewer commenting on the third card selects all three, and the comment comes back labelled with the first one's heading. Numbered peers make this obvious in the export: a comment on `02` recorded against `01`.
 
-If a container is *also* worth commenting on as a whole, give it a cid too. Nesting is fine — the layer anchors to the innermost `[data-cid]` under the click, so the peers win when a reviewer clicks one and the container catches clicks in the gaps.
+This is the rule most often broken, and `<div class="cards" data-cid="…">` with three bare `.card` children inside it is what the breakage looks like. Anchoring the row and skipping the cards costs three anchors and produces one outline that hugs all three.
 
-The component degrades when this rule is missed: heading and quote come from the child of the block the reviewer actually clicked, so a coarse anchor at least records the right card. The `cid` is still the container's, so the highlight and the resolved anchor stay coarse. Anchor the peers.
+**The row itself may also carry a cid, and usually should.** Nesting is fine and intended — the layer anchors to the innermost `[data-cid]` under the click, so a click on a card selects that card while a click in the gap between cards selects the row. That is the natural way to comment on the set as a whole. Comments on the section heading above it work the same way, at one level up.
+
+Three levels, and stopping there:
+
+| Click lands on | Anchor | Means |
+|---|---|---|
+| A card | That card | This one |
+| The gap between cards | The row | All of them |
+| The heading above | The heading group | This section |
+
+The component degrades when this rule is missed: heading and quote come from the child of the block the reviewer actually clicked, so a coarse anchor at least records the right card. The `cid` is still the container's, so the highlight and the resolved anchor stay coarse. A click that lands on the container itself rather than inside a child has nothing to scope to and records the container's first heading, which is the first card's. Anchor the peers.
+
+**Verify by hovering, not by reading the source.** Turn review mode on and run the cursor down the page. Every paragraph, card, and list item outlines on its own, and each outline hugs that one thing. An outline that wraps several items is a container anchored where its children should be. A stretch of prose that never outlines is a run of paragraphs with no cids. Both are invisible in the markup and obvious in ten seconds of hovering.
 
 **Never put `data-cid` on a `<table>`, `<thead>`, `<tbody>`, `<tr>`, or `<td>`.** The layer appends its marker as a child of the anchored element, and a `<button>` inside table markup renders badly. Put it on the `overflow-x: auto` wrapper the table already needs — which is also the thing a reader means when they comment on "the table."
 

@@ -1,17 +1,21 @@
 ---
-name: artifact-draft
+name: artifact-annotate
 description: |
-  Circulates a finished deliverable to stakeholders outside the org for comment, before a final version. Adds an in-page review layer that exports to the clipboard or a file, plus the anchor rule that keeps comments matchable across revisions. `artifact-build` decides that a deliverable needs this; this skill supplies it.
-  TRIGGER when: `artifact-build` determines a deliverable will be read by someone who cannot comment on it in Claude, or when the user asks to circulate one for comment — "send this out for review," "make this commentable," "share a draft with the client," "something they can leave feedback on." Also when republishing after a round of comments, so prior feedback gets answered on the page. NOT when the user asks to draft, write, or produce a document — that is the content skill's job, and this one runs after it.
+  Makes a page markable-up by whoever reads it, and delivers it as a standalone HTML file. Supplies the document wrapper, the in-page review layer that exports to the clipboard or a file, and the anchor rule that keeps comments matchable across revisions. `artifact-build` writes the page; this skill turns it into a file someone can open and annotate.
+  TRIGGER when: anyone needs to mark up the page — an outside stakeholder who cannot comment in Claude, or the user reading their own copy and wanting to record their thinking on it. Also on any handover of the page as a file, on "send this out for review," "make this commentable," "share a draft with the client," "something I can mark up," and when republishing after a round of comments so prior feedback gets answered on the page. NOT when the user asks to draft, write, or produce a document — that is the content skill's job, and this one runs after it.
 ---
 
-# Artifact Draft
+# Artifact Annotate
 
-A deliverable is a **draft** when a stakeholder can comment on it, and **final** when they cannot. That is the only difference this skill makes, and it is the whole reason it exists.
+A page is **annotatable** when its reader can mark it up, and **final** when they cannot. That is the only difference this skill makes, and it is the whole reason it exists.
+
+The reader is often a stakeholder outside the org, and just as often the user. Someone asking for a concept explained on a page wants to record what they thought about it while reading — where they disagreed, what they want followed up. The mechanism is identical either way, so the audience never decides whether this skill runs; whether anyone marks the page up does.
 
 The workflow it replaces is posting a Markdown file to a shared drive and asking for comments in a thread. Same document, comments anchored to the block they are about, and a return path that lands in a form `/triage` can act on.
 
-**Final is the same page without this skill.** Same content skill, same `artifact-build` pass, stop before this one. Same `docId`, next `revision` — the final is the revision after the last round of responses, not a new document. Keeping one lineage is what lets `/triage` resolve a late comment against the draft the reviewer actually read.
+**This skill is also the file publisher.** `artifact-build` writes page content and stops there, exactly as it does for a page the Artifact tool publishes. Two things turn that content into something openable: the Artifact tool's publish step, and this skill. Both supply the document wrapper — see **The wrapper** below.
+
+**Final is the same page without this skill.** Same content skill, same `artifact-build` pass, stop before this one. Same `docId`, next `revision` — the final is the revision after the last round of responses, not a new document. Keeping one lineage is what lets `/triage` resolve a late comment against the version the reviewer actually read.
 
 Three skills cooperate on one file:
 
@@ -19,19 +23,20 @@ Three skills cooperate on one file:
 |---|---|
 | `ideate:ontology`, `ideate:make-prd`, `ideate:make-summary`, … | What the document says |
 | `artifact-build` | Treatment, palette, type, layout, voice, theme control, view routing — **and the decision that a deliverable needs commenting at all** |
-| **`artifact-draft`** | The `data-cid` rule, the feedback component, config and transports, round-two responses |
+| **`artifact-annotate`** | The document wrapper, the `data-cid` rule, the feedback component, config and transports, round-two responses, delivery |
 | `/triage` | Ingesting feedback once it comes back |
 
 ## Goal
 
-A stakeholder outside the org opens an HTML file, comments on specific blocks, and gets that feedback back to us in one action — without an account, an install, or an explanation.
+Someone opens an HTML file, comments on specific blocks, and gets that feedback back in one action — without an account, an install, or an explanation. It renders correctly on the first open, in any browser, whether it came off a shared drive or a mail attachment.
 
 ## Invocation
 
 | Input | Behavior |
 |---|---|
-| `artifact-build` step 2 determined this is a draft | Run it. That determination is the normal entry point. |
-| "Send this out for review" / "make this commentable" / "share a draft with the client" | Run it, and load `artifact-build` if it is not already loaded. |
+| `artifact-build` step 2 determined the page is annotatable | Run it. That determination is the normal entry point. |
+| "Send this out for review" / "make this commentable" / "something I can mark up" / "share a draft with the client" | Run it, and load `artifact-build` if it is not already loaded. |
+| The page is going to the user as a file, annotation aside | Run it. Delivering a file is this skill's job, and the wrapper it supplies is what makes the file open correctly. |
 | "Draft me a PRD" / "draft up the ontology" | **Not this skill.** That is the content skill being asked for a first version. This one runs after there is something to circulate. |
 | The deliverable is final — signed off, or never going out for comment | Do not run it. `artifact-build` alone produces the final version. |
 | The same asked of a deliverable **already published as an artifact** | The ask is for the **file**, not the URL. Someone who could review it in Claude would use the artifact. Go to **Delivery** and hand over the HTML. |
@@ -54,31 +59,51 @@ Arriving after a finished page means going back to step 3 rather than patching w
 
 Every commentable block carries `data-cid`. The rule, the format, and the coupling to content-skill headings are in `components/README.md`. `artifact-build` applies it on every artifact regardless of this skill, so on a reviewable deliverable it should already be done — verify rather than add.
 
+**Verify by hovering.** Turn review mode on and run the cursor down the page. Every paragraph, card, and list item outlines on its own, and each outline hugs that one thing. An outline wrapping several items means a container took the anchor its children should have; prose that never outlines means paragraphs with no cids. Reading the markup does not catch either one, which is how both ship.
+
 ### 2. Multi-view deliverables
 
 A deliverable spanning several pages is one file with hash-routed views, via `artifact-build`'s `view-router.html`. Relative links between separate local HTML files are never used; the reasons are in that skill's component README.
 
 One file means one `docId`, one storage bucket, and one submission covering every view. A reviewer who comments across three views presses Send once.
 
-### 3. Paste the component
+### 3. The wrapper
+
+`artifact-build` hands over page content with no document around it — the same contract it follows for a page the Artifact tool publishes, where the publish step supplies the wrapper. Nothing supplies it here except this skill. Three lines, first in the file, verbatim:
+
+```html
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+```
+
+The implied `<html>`, `<head>`, and `<body>` make the explicit tags unnecessary; the page's own `<title>` and `<link rel="icon">` follow these three.
+
+**`<meta charset="utf-8">` is the one that bites.** A `file://` page has no HTTP `Content-Type` header, so a document that never declares its encoding falls back to the browser's locale default and every non-ASCII byte renders as mojibake — an em dash arrives as `â€"`, and curly quotes, arrows, and the `○ ◐ ●` theme glyphs break the same way. The bytes on disk are correct UTF-8 and the file passes every check that reads it as text; the missing piece is the line that tells the browser.
+
+This failure is invisible from the authoring side, which is why it is a step rather than a note. A page that was also published looks perfect at its URL, because the Artifact wrapper declares the charset there. Only the file the reader opens is broken, and the reader is the one person who never sees the other copy.
+
+Omitting the doctype costs quirks mode. Omitting the viewport meta renders the page at desktop width on a phone, which for a reviewer reading a deliverable on their phone is most of the reason they give up on it.
+
+### 4. Paste the component
 
 `components/feedback-layer.html`, verbatim, last — after the theme control and the router. Fill in `#feedback-config` and change nothing else.
 
 `#feedback-config` holds four fields — `docId`, `title`, `revision`, `endpoint` — and no address. That is deliberate: a component that knew where feedback should go would ship that address inside a file handed to a client, and would need a per-installation default that anyone installing the skill would inherit.
 
-### 4. Commit the source
+### 5. Commit the source
 
 **The scratchpad is not enough for a reviewable deliverable.** The source belongs in the engagement repo at `ideate/artifacts/<docId>.html`, committed, with each published revision commitable or taggable.
 
 Ingested feedback resolves its anchors against the exact revision the reviewer read. A client who sits on a file for two weeks and sends comments against revision 2 while we are on revision 4 needs revision 2 to still exist. A file that only ever lived in a session directory leaves round two guessing.
 
-### 5. Delivery — put the file in the user's hands
+### 6. Delivery — put the file in the user's hands
 
 **The deliverable is the `.html` file on disk. Publishing it as an artifact does not deliver it.**
 
 An artifact URL is an in-org surface: opening it needs a Claude account and a share, and the built-in comments already work there. A reviewer who has that access does not need this skill. The component exists for the reviewer who has none of it — a client VP, an outside contractor, someone who gets a file over mail and opens it in Safari. **That person cannot be handed a link.** Publishing alongside is fine, for the team's own copy. It is never the handover.
 
-**Write it to a real path first**, never the session scratchpad — the engagement repo at `ideate/artifacts/<docId>.html`, and a working copy where the user is if that is elsewhere. Step 4 already requires the committed copy; this is the same file, not a second one.
+**Write it to a real path first**, never the session scratchpad — the engagement repo at `ideate/artifacts/<docId>.html`, and a working copy where the user is if that is elsewhere. Step 5 already requires the committed copy; this is the same file, not a second one.
 
 Then hand it over by the route the surface supports. **Read the surface, do not assume it:**
 
@@ -129,13 +154,14 @@ This skill's obligation to that handoff is the format and the source. `gnar.arti
 ## Closure Criteria
 
 - [ ] Loaded before `artifact-build` step 3, not retrofitted onto a finished page
-- [ ] Every commentable block carries `data-cid`; ids preserved from the prior revision
+- [ ] Every visually distinct block carries `data-cid` — paragraphs, cards, and list items each on their own, rows anchored as well as their cards — confirmed by hovering the page rather than reading it; ids preserved from the prior revision
 - [ ] Multi-view deliverables use hash routing in one file; no relative links between local files
 - [ ] `feedback-layer.html` pasted verbatim, last, unrestyled
 - [ ] `#feedback-config` fully filled in — no `REPLACE-` strings survive
 - [ ] `to` is the engagement address, not a personal one
 - [ ] Source committed to `ideate/artifacts/<docId>.html` with the revision recoverable
 - [ ] Review mode exercised once end to end: comment, Send, all three export paths reachable
+- [ ] **Wrapper present and verified in a browser** — doctype, `charset`, viewport, first in the file; confirmed by opening it and reading a line with an em dash, never by reading the source, which is correct in the failing case
 - [ ] **The surface was read** (`printenv CLAUDE_CODE_ENTRYPOINT`), not assumed
 - [ ] **Handed over by the matching route** — terminal: opened, revealed, path printed, `SendUserFile`; GUI: `SendUserFile` alone. An artifact URL is not a handover on either.
 - [ ] Handover message tells the reviewer the review mode exists, and which return paths work where the file is going

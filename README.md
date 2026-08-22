@@ -88,9 +88,11 @@ Tools for exploring problems and building clarity. Primarily for human-paired wo
 
 ### Author
 
-Tools for shaping generated prose.
+Tools for shaping generated prose and the pages it ships on.
 
 - **`/deck-voice`** — Voice and cadence rules for generated presentation content: slide bodies, speaker notes, card copy, closers. Drafts new copy under the rules, or sweeps an existing deck into an `original → replacement` rewrite spec. Self-contained so it can be uploaded to Cowork, which does not read `user/CLAUDE.md`.
+- **`/artifact-build`** — The build sequence for a page deliverable: treatment read, written design plan, then code, then a pre-delivery check. Produces page content with no document wrapper, so it runs the same whether the page is published or handed over as a file. Wraps the built-in `artifact-design` with the gates and house rules that keep a page from drifting toward generic.
+- **`/artifact-annotate`** — Makes a page markable-up by whoever reads it — an outside reviewer who cannot comment in Claude, or the user annotating their own copy — and delivers it as a standalone HTML file. Supplies the document wrapper, the in-page review layer with clipboard and file export, and the anchor rule that keeps comments matchable across revisions. Returned feedback feeds `/triage`.
 
 ### Plan
 
@@ -99,6 +101,7 @@ Tools for defining and validating the work.
 - **`/planning`** — Create a detailed implementation plan (Phase > Step > Task) with phase right-sizing. Produces `<work-item>.plan.md`.
 - **`/pre-flight`** — Validate a plan for gaps, contradictions, and opportunities. The highest-value quality gate.
 - **`/estimate`** — Produce an LOE score (1–5) by evaluating complexity and impact.
+- **`/cold-start`** — Scaffold a repo's project management: a label taxonomy (value streams + components), release-backed milestones, issue bucketing, and GitHub Project wiring. Works backwards from release promises, greenfield or against an existing backlog.
 
 ### Implement
 
@@ -184,19 +187,9 @@ Do not install the plugin on a machine that ran `setup.sh` — skills, agents, a
 
 ### Versioning
 
-`plugin.json` carries a semver `version`, starting at `0.1.0`. Installs pin to it: a machine running `0.1.0` stays on `0.1.0` until the field is bumped and pushed, even if `main` has moved. **A change that ships to other installs needs a bump in the same commit.**
+`plugin.json` deliberately omits `version`. The plugin's version resolves to the commit SHA instead, so a push to `main` reaches every install on the next update — no manual version bump. Adding a `version` field would pin installs until it is bumped.
 
-The `0.x` series says the harness still churns — skills get renamed and rules get rewritten without ceremony. While the major stays at `0`, breaking changes ride the minor.
-
-| Change | Bump |
-|---|---|
-| Removing or renaming a skill, agent, or slash command; anything that breaks a caller | Minor — `0.1.0` → `0.2.0` |
-| New skill or agent; a new capability in an existing one | Minor — `0.1.0` → `0.2.0` |
-| Wording, rules, or fixes inside an existing skill | Patch — `0.1.0` → `0.1.1` |
-
-Docs-only edits that don't ship behavior (this README, `retros/`, `docs/`) need no bump.
-
-This replaces the earlier SHA-tracking setup, where the omitted `version` let a push to `main` reach every install on the next update. The bump is manual now; a stable number is what peers report bugs against and what identifies which account runs what.
+The harness is edited continuously, and a pinned version means an install silently runs a stale copy until someone remembers the bump. Tracking the SHA makes `main` the only state that exists. Experiments belong in the working tree or on a branch; anything pushed to `main` is shipped.
 
 ### Global instructions
 
@@ -208,7 +201,7 @@ This replaces the earlier SHA-tracking setup, where the omitted `version` let a 
 claude plugin validate .
 ```
 
-Expect a clean report. Any warning is a real problem.
+Reports one warning about the missing `version`, which is intentional. Any other warning is a real problem.
 
 ---
 

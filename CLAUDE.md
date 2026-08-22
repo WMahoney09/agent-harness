@@ -30,8 +30,8 @@ Consequences for anything added here:
 - A new **hook** needs registering twice: in `user/settings.json` for the symlink path, and in `hooks/hooks.json` for the plugin path. Plugin hook commands must use `${CLAUDE_PLUGIN_ROOT}`, never `~/.claude/`.
 - Skills must not assume `user/CLAUDE.md` is loaded implicitly. On the plugin path it arrives through a `SessionStart` hook, and on claude.ai it does not arrive at all. A skill with a hard dependency on a rule should restate it, as `deck-voice` does.
 - Cowork has no shell, no `git`, and no `gh`. Skills that need them still install there and simply do not apply. Do not add tool assumptions to a skill that could be written without them.
-- Run `claude plugin validate .` after touching `.claude-plugin/*`, `hooks/hooks.json`, or any frontmatter. Expect a clean report; any warning is a real problem.
-- **Bump `version` in `.claude-plugin/plugin.json` in the same commit as any change that ships.** Installs pin to that number and stay there until it moves. While the major stays at `0`: new skill or agent → minor; edits inside an existing one → patch; a removal or rename that breaks a caller → minor. Docs-only edits (`README.md`, `docs/`, `retros/`) need no bump.
+- Run `claude plugin validate .` after touching `.claude-plugin/*`, `hooks/hooks.json`, or any frontmatter. One warning about the missing `version` is expected; it keeps the plugin tracking the commit SHA. Any other warning is a real problem.
+- **`plugin.json` carries no `version`, and nothing here needs a bump.** The plugin tracks the commit SHA, so a push to `main` reaches every install on the next update. Experiment locally and on branches; `main` is what ships.
 
 ## Working in this repo
 

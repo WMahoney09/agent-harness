@@ -82,4 +82,4 @@ Ratios are hand-computed from sRGB relative luminance. Re-run them through a che
 
 ## Where it came from
 
-The comparison that settled it weighed this against a teal-start variant on the real surfaces of `artifact-draft`'s chrome. Slate won on being neutral at the cool end — a teal start reads as its own brand colour and competes with the deliverable's palette, which is the one thing tool chrome must not do.
+The comparison that settled it weighed this against a teal-start variant on the real surfaces of `artifact-annotate`'s chrome. Slate won on being neutral at the cool end — a teal start reads as its own brand colour and competes with the deliverable's palette, which is the one thing tool chrome must not do.

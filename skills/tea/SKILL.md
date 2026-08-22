@@ -1,13 +1,13 @@
 ---
 name: tea
 description: |
-  Tea — Terse, ELIF, Artifact. Turn a topic or a project's real state into a plain-language page, published as an Artifact and commentable in place. Two modes: concept tea makes an unfamiliar idea land; project tea researches an engagement across meetings, Slack, Runn, mail, Drive, and delivery artifacts, then reports where it stands.
+  Tea — Terse, ELIF, Artifact. Turn a topic or a project's real state into a plain-language page, delivered as a self-contained HTML file carrying its own review layer for comments. Two modes: concept tea makes an unfamiliar idea land; project tea researches an engagement across meetings, Slack, Runn, mail, Drive, and delivery artifacts, then reports where it stands.
   TRIGGER when: the user sends `/tea` after an agent response (turn that topic into a page), `/tea <concept>` (explain that concept as a page), or `/tea <project>` / "give me the tea on <project>" (research that engagement and report its state). Also natural language: "put that on a page", "I'm still not getting this", "what's the state of <project>", "where does <project> stand", "give me a pulse on <project>".
 ---
 
 # Tea
 
-`terse` decides what goes on the page. `elif` decides how it reads. `artifact-craft` decides how it looks and publishes it. Tea composes the three in that order and hands back a URL.
+`terse` decides what goes on the page. `elif` decides how it reads. `artifact-build` decides how it looks. `artifact-annotate` decides how it reaches the reader and how their comments get back. Tea composes the four in that order and hands over a file.
 
 ## Goal
 
@@ -15,13 +15,15 @@ The reader finishes in a couple of minutes, can restate the subject in their own
 
 ## Your Role
 
-Read the page. Annotate what didn't land — Artifacts published from this machine carry comments out of the box, and every block on the page is a comment target. Send the comments back and `/triage` turns them into the next round.
+Open the file. Click **Review**, comment on whatever didn't land, then **Send feedback** and either copy it or download it. Paste or hand that back and `/triage` turns it into the next round.
+
+Every block on the page is a comment target, and each comment comes back carrying its heading, its anchor id, and the text it was left on — so the answer can address what was asked without a round of "which part do you mean?"
 
 ## Agent's Role
 
-Pick the mode, gather what the page needs, run the three passes in order, publish, hand back the URL.
+Pick the mode, gather what the page needs, run the three passes in order, commit the source, hand over the file.
 
-Never drop a pass. Terse without ELIF produces a dense page carrying the same jargon that caused the confusion. ELIF without terse produces a plain-language wall. Either one without `artifact-craft` produces a chat message.
+Never drop a pass. Terse without ELIF produces a dense page carrying the same jargon that caused the confusion. ELIF without terse produces a plain-language wall. Either one without `artifact-build` produces a chat message. Any of them without `artifact-annotate`'s delivery produces a page the reader cannot mark up.
 
 ## Invocation
 
@@ -54,15 +56,49 @@ The page is terse-selected content written in plain words. It is not a bullet li
 
 ### 3. Artifact — how it looks
 
-Run `artifact-craft` in full: treatment read, written design plan, then code, then the pre-publish check. The treatment is utilitarian in nearly every case — this is a reference someone reads, and an oversized hero on it reads as unserious.
+Run `artifact-build` in full: treatment read, written design plan, then code, then the pre-delivery check. The treatment is utilitarian in nearly every case — this is a reference someone reads, and an oversized hero on it reads as unserious.
 
-`data-cid` on every commentable block, since comments are the return path and this page exists to be argued with.
+`data-cid` on every commentable block, since comments are the return path and this page exists to be argued with. **Anchor the section heads too** — the block holding the eyebrow and the `h2` is what a reader clicks when the question is about a whole section, and a page that only anchors paragraphs and tables leaves that click with nothing to attach to.
 
-**The title starts with 🍵, and the favicon is 🍵.** `<title>🍵 Halo OMS</title>`, published with `favicon: "🍵"` — the tea, then the two-to-four-word name. Both mark the page as a tea at a glance, in a gallery of dozens of artifacts and in a row of browser tabs. This is the one place the no-emoji-in-prose rule is set aside deliberately; it does not extend to headings, section markers, or body copy. Emoji in a title is an AI tell, and here it is a useful one — a knowing exception, not an oversight.
+**The page heading starts with ☕, and the favicon is ☕.** `<h1>☕ Halo OMS</h1>`, with an inline `<link rel="icon">` carrying the cup so a local file shows it too, and `favicon: "☕"` on any published copy. The heading is the one the reader sees on the page; the favicon is the one they find in a row of tabs. Both mark the page as a tea at a glance.
 
-The favicon is fixed at 🍵 across every tea, which overrides the usual subject-derived choice. `artifact-craft`'s stability rule still holds within a page's life: a tea keeps 🍵 on every redeploy.
+**The `<title>` tag stays clean** — `<title>Halo OMS</title>`. The browser tab already shows the favicon beside the title, so an emoji there is the same mark twice.
 
-Skip `artifact-annotate`. The reader is inside Claude, where built-in comments already work.
+This is the one place the no-emoji rule is set aside deliberately, and it reaches the h1 and the favicon only — never section headings, never body copy. Emoji as a page marker is an AI tell, and here it is a useful one: a knowing exception, not an oversight.
+
+The favicon is fixed at ☕ across every tea, which overrides the usual subject-derived choice. `artifact-build`'s stability rule still holds within a page's life: a tea keeps ☕ on every redeploy.
+
+**Load `artifact-annotate` and run it in full — the delivery model and the feedback layer both.** It is loaded before the code is written, not bolted onto a finished page; that skill's Gate 0 applies here as written.
+
+Paste the feedback layer last, verbatim, after the theme control. Fill in `#feedback-config` and nothing else:
+
+- `docId` — the page slug, matching the filename: `tea--<slug>`.
+- `title` — the page title without the ☕.
+- `revision` — the build timestamp.
+- `endpoint` — `null`. Export is the return path.
+
+The built-in artifact comments still work and are still there. They anchor by DOM position and carry neither the heading nor the text they were left on, so a comment on section two arrives as `section:nth-of-type(2) > div:nth-of-type(1)` and an agent without the source file cannot say what it refers to. The feedback layer's payload carries the `cid`, the heading, the quoted block, and the kind of comment, which is what makes a reply possible without interrogating the reader.
+
+### Delivery — the file is the deliverable
+
+`artifact-annotate`'s delivery model applies to every tea, both modes, with no carve-out. The deliverable is the `.html` file on disk. **A published artifact URL is not a handover.**
+
+**Never write a tea to the session scratchpad.** It goes to a real path, which is also the committed one:
+
+| The tea is about | Path |
+|---|---|
+| An engagement with a repo | `<repo>/ideate/artifacts/tea--<slug>.html` |
+| Anything else | `<workspace>/.tea/tea--<slug>.html`, beside its source map |
+
+Commit it. That is what lets a comment arriving next week resolve its anchors against the revision the reader actually read, and it is what makes `revision` in the config mean something.
+
+**When the destination is not under version control, say so in the handover.** Some workspaces are plain directories. The file still goes there and still gets delivered; what is lost is recoverability, so the next run overwriting that path destroys the revision a reader may still be holding. Name that out loud rather than skipping the step silently, and offer to `git init` the workspace if teas are going to keep landing there.
+
+Then hand it over by the route the surface supports, reading the surface rather than assuming it — `printenv CLAUDE_CODE_ENTRYPOINT`, `cli` means a real terminal and everything else means a GUI. The table, the SSH guard, and the Linux fallback are in `artifact-annotate`; follow them as written.
+
+**All three export paths work on a local file**, which is the point of delivering one. Copy, download, and any onward channel the reader picks are all live. Say which one you want it back through.
+
+**Publishing is optional and never the handover.** A tea may also be published as an Artifact for the team's own copy — useful when the page is worth keeping in the gallery or when the reader is inside Claude anyway. When you do, the file still goes over first, and the URL is mentioned second. When you don't, nothing is lost.
 
 ## Concept Tea
 
@@ -120,7 +156,7 @@ State the window on the page.
 
 Sources disagree, and the disagreement is usually the story. When the channel says a milestone landed and Runn shows the hours still burning against it, put both readings on the page and name the conflict. Do not average them into a comfortable middle.
 
-Separate what was observed from what was inferred, and mark the inferences on the page as `artifact-craft` requires.
+Separate what was observed from what was inferred, and mark the inferences on the page as `artifact-build` requires.
 
 ### 5. Grade
 
@@ -131,9 +167,9 @@ One health verdict — **on track**, **at risk**, or **off track** — with the 
 - A quiet channel is a signal. Two weeks of silence on an active engagement goes on the page.
 - Name the one thing that would change the grade.
 
-### 6. Publish and offer the map
+### 6. Deliver and offer the map
 
-Compose through the three passes, publish, hand back the URL. Then offer to save the source map for next time, and write nothing until that is approved.
+Compose through the three passes, commit the source, hand over the file. Then offer to save the source map for next time, and write nothing until that is approved.
 
 ### Handling
 
@@ -155,16 +191,18 @@ Local: <path>
 Circleback: <meeting series name>
 Gmail: <search that finds the threads>
 
-Last tea: YYYY-MM-DD → <artifact URL>
+Last tea: YYYY-MM-DD → <path to the committed file> [→ <artifact URL>, when one was published]
 ```
 
-Update `Last tea` on each run so the next window starts where this one stopped. Keep credentials out of it; it holds names and ids only.
+Update `Last tea` on each run so the next window starts where this one stopped. The path is what a later run reads to resolve feedback anchors and what it overwrites on a refresh; the URL is recorded only when a copy was published, and only so a redeploy can keep that link. Keep credentials out of it; it holds names, ids, and paths only.
 
 ## Artifact
 
-A published Artifact — HTML written to the session scratchpad, then published with the Artifact tool. See `ARTIFACT.md` for the content template.
+A self-contained HTML file at a real, committed path, handed to the user by `artifact-annotate`'s delivery route. It carries that skill's feedback layer, so the page a reader comments on and the page they read are the same page. See `ARTIFACT.md` for the content template.
 
-Republish the same file path to keep the URL when refreshing a project within a conversation. From a new conversation, pass the prior URL from the source map's `Last tea` line so the link survives.
+Refreshing a tea overwrites the same path and commits again — same `docId`, new `revision`. That keeps one lineage, which is what lets late feedback against an older revision still resolve.
+
+When a copy was also published, republish that same file path to keep the URL within a conversation, or pass the URL from the source map's `Last tea` line from a new one.
 
 ## Closure Criteria
 
@@ -172,25 +210,40 @@ Republish the same file path to keep the URL when refreshing a project within a 
 - [ ] Terse pass ran first and produced the page's spine
 - [ ] ELIF pass ran over the spine; every term of art is defined in place or gone
 - [ ] Every fact, identifier, number, and caveat survived both passes verbatim
-- [ ] `artifact-craft` ran in full, including the pre-publish self-check
-- [ ] Every commentable block carries `data-cid`
+- [ ] `artifact-build` ran in full, including the pre-delivery self-check
+- [ ] Every commentable block carries `data-cid`, section heads included
+- [ ] `artifact-annotate` loaded before the code was written, not retrofitted
+- [ ] `artifact-annotate`'s feedback layer pasted in last, verbatim, with `#feedback-config` filled and no `REPLACE-` strings left
+- [ ] File written to a real path, never the scratchpad, and committed
+- [ ] **The surface was read** (`printenv CLAUDE_CODE_ENTRYPOINT`), not assumed
+- [ ] Handed over by the matching route — terminal: opened, revealed, path printed, `SendUserFile`; GUI: `SendUserFile` alone
 - [ ] Inferences marked as inferences on the page
 - [ ] Project tea: health verdict leads, and what-needs-you sits directly under it
 - [ ] Project tea: sources read and sources unreachable both listed, with the window stated
 - [ ] Project tea: page marked internal
 - [ ] Source map offered, and written only after approval
-- [ ] URL handed back, with the note that artifacts stay private until shared
+- [ ] Handover message tells the reader the review mode exists, and names the channel the feedback should come back through
 
 ## Notes
 
-**A tea is not a record.** It is read once, over a cup of tea, and acted on by going and talking to people. It is not shared, not sent to a client, not committed anywhere, and nothing downstream depends on it. Two consequences: publish it rather than gating it behind a review pass — the comment loop is the correction, and it works. And do not build durability into it. No versioning ceremony, no approval state, no archive. The next run replaces it.
+**A tea is not a record.** It is read once, over a cup of tea, and acted on by going and talking to people. It is not sent to a client, and nothing downstream depends on it. Two consequences: hand it over rather than gating it behind a review pass — the comment loop is the correction, and it works. And do not build ceremony around it. No approval state, no archive, no version picker. The next run overwrites the same path.
+
+The commit is not ceremony. It costs one command and it is the only thing that makes a comment arriving after the next run still resolvable — the reader read revision 2, the path now holds revision 3, and the anchors only line up if revision 2 is still recoverable. An earlier version of this skill waived the commit on the argument that a tea has no weeks-later to plan for. Readers sit on pages.
+
+**Why the feedback layer, when the reader is inside Claude.** The built-in comments work, and for a while this skill used them on exactly that reasoning. What they do not carry is what the comment was left *on*. A thread arrives anchored as `section:nth-of-type(2) > div:nth-of-type(1)` with the comment text and nothing else — no heading, no quote, no stable id. That path is resolvable against the source file, and an agent holding the file should resolve it rather than asking. An agent without the file cannot, and asking the reader which section they meant, on a page they are looking at, reads as broken.
+
+The DOM path has a second problem the feedback layer does not: it is positional. Insert a section, republish, and every prior thread silently points one section off, with no error anywhere. A `cid` plus a quoted excerpt survives that.
+
+The cost is a manual return trip — Review, comment, Send, copy, paste — where the built-in comments arrive on their own. That trade is deliberate: a comment that arrives instantly and cannot be answered is worth less than one that takes two clicks and can.
 
 **Why terse runs first.** ELIF over unselected content produces a plain-language wall, and then the cutting has to happen anyway — against prose that now takes more words to say the same thing. Selecting first means ELIF translates a spine.
 
-**Why it always publishes.** The point of the invocation is a change of format. A terse-plus-plain answer in the chat is `/terse` then `/elif`, which already exist. Tea is those two composed onto a page the reader can scan, keep, and annotate.
+**Why it always produces a page.** The point of the invocation is a change of format. A terse-plus-plain answer in the chat is `/terse` then `/elif`, which already exist. Tea is those two composed onto a page the reader can scan, keep, and annotate.
+
+**Why the page is a file and not a URL.** Both carry the same content and the same feedback layer, so the choice comes down to what the reader can do with it. A file opens in their own browser, where all three export paths fire and the page is theirs to keep. A URL opens in the artifact viewer, where `<a download>` is inert and the page belongs to the gallery. The reader also frequently wants to forward a tea to someone who has no Claude account, and a file survives that trip. Publishing alongside stays available for the team's own copy; it is an addition to the handover, never a substitute for it.
 
 **Why project mode fans out.** One agent reading five source families in sequence spends its context on transcripts and Slack scrollback and arrives at synthesis with nothing left. Five agents each return a page of findings, and the synthesis happens against findings.
 
 **On the health verdict.** The grade is the reason the page exists, and softening it defeats the purpose. An engagement graded on track every week until the month it fails was never being graded.
 
-**Concept tea and project tea share only the passes.** They gather differently, they are shaped differently, and the only thing they hold in common is terse-then-ELIF-then-publish. Keeping them one skill is deliberate: the invocation is the same instinct — hand me this in a form I can absorb.
+**Concept tea and project tea share only the passes.** They gather differently, they are shaped differently, and the only thing they hold in common is terse-then-ELIF-then-page. Keeping them one skill is deliberate: the invocation is the same instinct — hand me this in a form I can absorb.

@@ -2,18 +2,18 @@
 
 ## Meta
 
-- **Storage:** Published Artifact. Source HTML in the session scratchpad unless the user names a location; the URL is the deliverable.
-- **Filename:** `tea--<slug>.html` — `<slug>` is the concept or project, hyphenated. Stable across redeploys so republishing keeps the URL.
-- **Favicon:** `🍵` on every tea, no exceptions. The format is the identity here, not the subject.
+- **Storage:** A committed HTML file — `<repo>/ideate/artifacts/` for an engagement, `<workspace>/.tea/` otherwise. Never the session scratchpad. The file is the deliverable; a published copy is optional and never the handover.
+- **Filename:** `tea--<slug>.html` — `<slug>` is the concept or project, hyphenated. It is also the `docId`. Stable across runs, so a refresh overwrites one path and keeps one lineage.
+- **Favicon:** `☕` on every tea, no exceptions. The format is the identity here, not the subject.
 - **Trigger:** Every `/tea` run, both modes. The page is the output; there is no inline version.
 
 ## Template
 
-Design comes from `artifact-craft` and derives from the subject each time. This template fixes **what the page carries**, not how it looks. Sections in the stated order.
+Design comes from `artifact-build` and derives from the subject each time. This template fixes **what the page carries**, not how it looks. Sections in the stated order.
 
 ### Both modes
 
-- **Title** — `🍵` then two to four words, specific enough to pick out of a gallery. The concept or the project name. The tea marks the format at a glance and is the one sanctioned emoji; it never appears in headings or body copy.
+- **Heading** — `☕` then two to four words, specific enough to pick out of a gallery. The concept or the project name. The `<title>` tag carries the same words without the cup, since the tab already shows the favicon beside it.
 - **Subhead** — one line: what this page answers.
 - **Window and date** — project mode states the period read. Concept mode states the date only.
 - **Sources and confidence** — last section on the page. What was read, what could not be reached, and which claims are inference rather than observation.
@@ -49,12 +49,12 @@ Sections beyond these come from the subject. A page about a tradeoff wants the t
 
 ## Side Effects
 
-- **Source map** — project mode offers to write `<workspace>/.tea/<slug>.md` after publishing, and writes it only on approval. On a later run, its `Last tea` line supplies both the window start and the URL to republish against.
+- **Source map** — project mode offers to write `<workspace>/.tea/<slug>.md` after handing the file over, and writes it only on approval. On a later run, its `Last tea` line supplies the window start and the path to overwrite.
 
 ## Notes
 
 **Why the sources section sits last and always appears.** The page compresses meetings, channels, and a commercial system into a couple of minutes of reading, which is exactly the shape that invites over-trust. Naming what was read, what was missed, and what is inference lets the reader weight it. On project tea an unreachable source frequently matters more than anything that was reachable.
 
-**Why concept tea's template is partial.** A fixed six-section shape applied to every idea produces the templated sameness `artifact-craft` exists to prevent. These are the sections a concept page usually needs; the subject decides the rest.
+**Why concept tea's template is partial.** A fixed six-section shape applied to every idea produces the templated sameness `artifact-build` exists to prevent. These are the sections a concept page usually needs; the subject decides the rest.
 
 **Why "what needs you" sits second.** The reader is accountable for several engagements at once and reads this to find their own exposure. Burying the asks under the commercial detail means they get read last, or not at all.

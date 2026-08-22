@@ -7,7 +7,7 @@ Fixed, versioned blocks pasted into an artifact verbatim. They are utilities, no
 | `theme-toggle.html` | Every artifact, unless the design deliberately commits to a single look |
 | `view-router.html` | Any deliverable spanning several pages |
 
-The feedback layer lives in the `artifact-draft` skill, which owns reviewability. This skill's only obligations toward it are `data-cid` on commentable blocks and leaving the right-hand screen corners free.
+The feedback layer lives in the `artifact-annotate` skill, which owns reviewability. This skill's only obligations toward it are `data-cid` on commentable blocks and leaving the right-hand screen corners free.
 
 ---
 

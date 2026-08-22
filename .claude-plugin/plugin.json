@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "agent-harness",
   "displayName": "Agent Harness",
-  "version": "0.2.1",
   "description": "Will's Claude Code harness: Discover, Author, Plan, Implement, Deliver, and Reflect skills, three role-based agents, and the global instructions those skills assume.",
   "author": {
     "name": "William Mahoney",
