@@ -117,6 +117,11 @@
   .fbk-root :focus-visible { outline: 2px solid var(--fbk-accent); outline-offset: 1px; }
   .fbk-btn {
     all: unset;
+    /* `all: unset` also resets box-sizing to content-box, and this rule sits
+       after `.fbk-root *` at equal specificity, so it wins. Any full-width
+       button then overflows its container by its own padding and border —
+       which is what the send sheet's options did. Restore it here. */
+    box-sizing: border-box;
     display: inline-block;
     padding: 6px 11px;
     border: 1px solid var(--fbk-bd);
@@ -190,6 +195,16 @@
     cursor: var(--fbk-cursor);
   }
   .fbk-on [data-cid]:hover { outline-color: var(--fbk-accent); }
+
+  /* A block that scrolls its own content clips anything drawn outside its
+     padding box. The scrolling table wrapper is the common one: the anchor
+     rule puts the cid on it precisely because a <table> cannot hold a pin,
+     and `overflow-x: auto` then crops the pin's overhang and most of the
+     offset outline. Both move inside the box. Marked by script at init —
+     CSS cannot ask whether an element scrolls. */
+  .fbk-on [data-cid].fbk-clips { outline-offset: -3px; }
+  .fbk-panel-open [data-cid].fbk-clips.fbk-active { outline-offset: -3px; }
+  .fbk-clips > .fbk-pin { top: 5px; right: 5px; }
 
   /* The anchored block stays lit while its comments are open, in or out of
      review mode — a comment with no visible subject is hard to act on. */
@@ -962,6 +977,15 @@
     if (!state.dirty || !state.comments.length) return;
     e.preventDefault();
     e.returnValue = '';
+  });
+
+  // Mark the anchors that clip their own overflow, so the pin and the
+  // outline draw inside them instead of being cropped. Read once: an
+  // artifact's layout does not change under the reader, and getComputedStyle
+  // per block on every pin render would be paid on every keystroke.
+  blocks().forEach(function (b) {
+    var cs = getComputedStyle(b);
+    if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') b.classList.add('fbk-clips');
   });
 
   renderPins();

@@ -39,6 +39,8 @@ The component degrades when this rule is missed: heading and quote come from the
 
 **Never put `data-cid` on a `<table>`, `<thead>`, `<tbody>`, `<tr>`, or `<td>`.** The layer appends its marker as a child of the anchored element, and a `<button>` inside table markup renders badly. Put it on the `overflow-x: auto` wrapper the table already needs — which is also the thing a reader means when they comment on "the table."
 
+**An anchor that scrolls gets its marker inside.** The pin normally hangs off the top-right corner, and the hover outline sits 5px outside the box. A scroll container clips both — `overflow-x: auto` computes `overflow-y` to `auto` as well, so the overhang is cropped on every edge and the pin appears as a sliver at the top of a table header. The component marks these at init with `fbk-clips` and moves the pin and the outline inside. Nothing to do while authoring; it applies to any anchor with non-visible overflow, including a `figure` clipped for rounded corners.
+
 Format is nearest-heading slug plus an ordinal within that heading: `milestones-3`, `risks-1`. In a multi-view file the heading slug picks up the view name on its own — `typography-scale-2` — so ids stay unique file-wide with no extra rule.
 
 It is deterministic, so a regenerated revision produces matching ids for unchanged structure with nobody tracking anything. Ids shift when a block is inserted mid-section; the quote fallback exists for that, so do not build machinery to prevent it.
